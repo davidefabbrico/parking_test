@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#F2F1EC">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Parcheggio">
@@ -675,7 +675,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	}
 
 :root{
-  /* palette UrbanFlow: sfondo bianco, grigi e accenti Apple/iOS */
   --bg:#FFFFFF; --surface:#FFFFFF; --hair:#E8E8ED; --ink:#1D1D1F; --ink-2:#86868B; --ink-3:#AEAEB2;
   --blue:#0071E3; --green:#34C759; --amber:#FF9F0A; --red:#FF3B30;
   --panel:#F5F5F7;
@@ -686,11 +685,14 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
   -webkit-font-smoothing:antialiased;letter-spacing:-0.011em}
 .wrap{height:100dvh;position:relative;overflow:hidden}
 
-.mapstage{position:absolute;inset:0;background:var(--bg)}
-#map{position:absolute;inset:0}
+.mapstage{position:absolute;inset:0;background:var(--bg);overflow:hidden}
+/* il contenitore mappa è più grande dello schermo: quando ruota, gli angoli
+   non scoprono lo sfondo */
+#map{position:absolute;top:-50%;left:-50%;width:200%;height:200%;transform-origin:center center;
+  transition:transform .5s ease-out}
 .leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.75)!important}
 
-.float{position:absolute;background:rgba(255,255,255,.9);backdrop-filter:saturate(180%) blur(20px);
+.float{position:absolute;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);border-radius:16px;
   box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);z-index:401}
 
@@ -711,12 +713,15 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .tools button.on{color:var(--blue)}
 .tools svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-.startWrap{left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));padding:16px;text-align:center}
+.startWrap{left:16px;right:16px;bottom:calc(90px + env(safe-area-inset-bottom));padding:16px;text-align:center}
 .startWrap p{margin:0 0 12px;font-size:13px;color:var(--ink-2);line-height:1.45}
 
+.me-wrap{position:relative;width:15px;height:15px}
 .me-pulse{position:absolute;inset:-13px;border-radius:50%;background:rgba(0,113,227,.28);animation:pulse 2.4s ease-out infinite}
 @keyframes pulse{0%{transform:scale(.35);opacity:.75}100%{transform:scale(1.7);opacity:0}}
-.me-dot{width:15px;height:15px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.me-dot{position:absolute;inset:0;width:15px;height:15px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.me-beam{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;opacity:0;transition:opacity .3s,transform .3s}
+.me-beam.on{opacity:1}
 .park-pin{width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
   font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18);border:2.5px solid var(--blue)}
 .pop b{display:block;font-size:13px;margin-bottom:2px}
@@ -724,14 +729,19 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:410;
   background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
-  padding:8px 16px calc(14px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;max-height:56dvh;
   transition:transform .32s cubic-bezier(.32,.72,0,1);will-change:transform}
-/* pannello ritratto: resta visibile solo la maniglia in cima, il resto scivola fuori schermo */
-.sheet.collapsed{transform:translateY(calc(100% - 30px))}
-.grip{position:sticky;top:0;z-index:2;margin:-8px -16px 4px;padding:10px 16px 6px;background:var(--panel);
-  border-radius:20px 20px 0 0;cursor:pointer;display:flex;justify-content:center}
-.grip::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#D6D4CC;transition:background .2s}
-.grip:active::before{background:#B8B5AC}
+.sheet.collapsed{transform:translateY(calc(100% - 58px - env(safe-area-inset-bottom)))}
+.sheet.collapsed .sheetBody{opacity:0;pointer-events:none}
+.sheetBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 6px}
+.tabs{display:flex;border-top:1px solid var(--hair);background:var(--panel);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom));flex:0 0 auto}
+.tabs button{flex:1;border:0;background:none;cursor:pointer;padding:5px 0 3px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-3);font:inherit;font-size:10.5px;font-weight:500}
+.tabs button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tabs button.on{color:var(--blue)}
+.tabs button:active{opacity:.6}
+
 .card2{background:var(--surface);border-radius:16px;padding:4px 0;box-shadow:0 1px 2px rgba(0,0,0,.05);margin-bottom:10px}
 .row{display:flex;align-items:center;gap:12px;padding:12px 15px;font-size:14px}
 .row+.row{border-top:1px solid var(--hair)}
@@ -746,15 +756,21 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .log .row:active{background:#FAF9F6}
 .log a{color:var(--blue);font-size:12.5px;font-weight:500;text-decoration:none}
 
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat{background:var(--surface);border-radius:16px;padding:14px 15px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.stat b{display:block;font-size:23px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink-2)}
+.h2{font-size:12.5px;font-weight:600;color:var(--ink-3);margin:4px 2px 8px;text-transform:uppercase;letter-spacing:.03em}
+
 .btn{display:block;width:100%;border:0;border-radius:999px;padding:14px;font:inherit;font-size:16px;
   font-weight:600;cursor:pointer;background:var(--ink);color:#fff}
 .btn.stop{background:var(--red)}
 .btn:active{transform:scale(.99)}
-.note{font-size:11.5px;color:var(--ink-3);text-align:center;margin:10px 4px 0;line-height:1.5}
+.note{font-size:11.5px;color:var(--ink-3);text-align:center;margin:10px 4px 4px;line-height:1.5}
 
-.toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
+.toast{position:fixed;left:16px;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));
   background:var(--ink);color:#fff;border-radius:16px;padding:14px 16px;display:flex;gap:11px;align-items:center;
-  box-shadow:0 12px 32px rgba(0,0,0,.28);transform:translateY(140%);transition:transform .35s cubic-bezier(.32,.72,0,1);z-index:900}
+  box-shadow:0 12px 32px rgba(0,0,0,.28);transform:translateY(200%);transition:transform .35s cubic-bezier(.32,.72,0,1);z-index:900;cursor:pointer}
 .toast.on{transform:translateY(0)}
 .toast .ico{font-size:22px}
 .toast b{display:block;font-size:14.5px;font-weight:600}
@@ -781,34 +797,54 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
     <div class="float tools">
       <button id="zIn" aria-label="Ingrandisci"><svg viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></svg></button>
       <button id="zOut" aria-label="Riduci"><svg viewBox="0 0 20 20"><path d="M4 10h12"/></svg></button>
+      <button id="compass" aria-label="Blocca il nord in alto"><svg viewBox="0 0 20 20"><path d="M10 3l2.6 6.4L10 8l-2.6 1.4z"/><path d="M10 8v9"/></svg></button>
       <button id="locate" class="on" aria-label="Segui la mia posizione"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v3M10 14.5v3M17.5 10h-3M5.5 10h-3"/></svg></button>
     </div>
 
     <div class="float startWrap" id="startWrap">
-      <p>Tieni questa pagina aperta mentre guidi.<br>Appena ti fermi per bene, te lo dico.</p>
+      <p>Tieni questa pagina aperta mentre guidi.<br>Appena scendi dall'auto, ti dico dove l'hai lasciata.</p>
       <button class="btn" id="btnStart">Inizia a seguire</button>
     </div>
   </div>
 
   <div id="pannello" class="sheet hidden">
-    <div class="grip" id="grip" aria-label="Mostra o nascondi il pannello"></div>
-    <div class="card2">
-      <div class="row"><span class="g"><span class="k">GPS</span><span class="s" id="acc">—</span></span>
-        <span class="pill" id="pillGps">—</span></div>
-      <div class="row"><span class="g"><span class="k">Notifiche</span><span class="s">Avviso quando parcheggi</span></span>
-        <span class="pill" id="pillNotif">—</span></div>
-      <div class="row"><span class="g"><span class="k">Movimento</span><span class="s" id="motSub">Distingue i tuoi passi dalla coda in auto</span></span>
-        <span class="pill" id="pillMot">—</span></div>
+    <div class="sheetBody" id="sheetBody">
+      <section id="tabStato">
+        <div class="card2">
+          <div class="row"><span class="g"><span class="k">GPS</span><span class="s" id="acc">—</span></span>
+            <span class="pill" id="pillGps">—</span></div>
+          <div class="row"><span class="g"><span class="k">Notifiche</span><span class="s">Avviso quando parcheggi</span></span>
+            <span class="pill" id="pillNotif">—</span></div>
+          <div class="row"><span class="g"><span class="k">Movimento</span><span class="s" id="motSub">Distingue i tuoi passi dalla coda in auto</span></span>
+            <span class="pill" id="pillMot">—</span></div>
+        </div>
+        <button class="btn stop" id="btnStop">Interrompi</button>
+        <p class="note">Funziona solo mentre questa schermata è aperta e il telefono acceso: iOS mette in pausa il GPS se blocchi lo schermo o cambi app.</p>
+      </section>
+
+      <section id="tabViaggio" class="hidden">
+        <div class="stats">
+          <div class="stat"><b id="stKm">0,0</b><span>km percorsi</span></div>
+          <div class="stat"><b id="stDur">0 min</b><span>durata</span></div>
+          <div class="stat"><b id="stAvg">0</b><span>km/h media</span></div>
+          <div class="stat"><b id="stMax">0</b><span>km/h massima</span></div>
+        </div>
+        <div class="h2">Dove hai parcheggiato</div>
+        <div class="card2 log" id="log"></div>
+      </section>
     </div>
-    <div class="card2 log" id="log"></div>
-    <button class="btn stop" id="btnStop">Interrompi</button>
-    <p class="note">Funziona solo mentre questa schermata è aperta e il telefono acceso: iOS mette in pausa il GPS se blocchi lo schermo o cambi app.<br>Se concedi il movimento, capisco quando scendi e cammini dal quando semplicemente stai fermo in coda: così in traffico non ti avviso per sbaglio.</p>
+
+    <nav class="tabs">
+      <button id="navMappa" aria-label="Mappa"><svg viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Mappa</button>
+      <button id="navStato" class="on" aria-label="Stato"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.5 2.5"/></svg>Stato</button>
+      <button id="navViaggio" aria-label="Viaggio"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 15l5-4 4 3 7-6"/></svg>Viaggio</button>
+    </nav>
   </div>
 </div>
 
 <div class="toast" id="toast">
   <div class="ico">🅿️</div>
-  <div><b>Hai parcheggiato qui</b><span id="toastSub">Posizione salvata</span></div>
+  <div><b>Hai parcheggiato qui</b><span id="toastSub">Tocca per aprire in Mappe</span></div>
 </div>
 
 <script>
@@ -824,19 +860,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 "use strict";
 const $ = s => document.querySelector(s);
 
-/* ============================ MAPPA ============================
-   Tile CARTO Voyager: gratis, senza chiave API, stile chiaro con le
-   strade leggibili (nessuna dipendenza da Google Maps).             */
+/* ============================ MAPPA ============================ */
 const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([41.9028, 12.4964], 5);
-// Un solo fornitore di mappe può bloccare le richieste (è già successo con
-// alcuni). Provo lo stile chiaro "tipo Apple Maps"; se fallisce, passo a una
-// riserva di un fornitore diverso, così non resti mai senza mappa.
-// Primo: CARTO Positron — sfondo crema, strade bianche, verde e acqua tenui.
 const tilesA = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
   subdomains:'abcd', maxZoom:20, attribution:'&copy; OpenStreetMap, &copy; CARTO'
 });
-// Riserva: Esri "Light Gray", di un fornitore diverso ma dallo stile altrettanto
-// chiaro e sobrio, così anche il ripiego resta coerente con Apple Maps.
 const tilesB = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
   maxZoom:16, attribution:'Tiles &copy; Esri'
 });
@@ -844,58 +872,42 @@ let erroriTile = 0, passatoAlSecondo = false;
 tilesA.on('tileerror', () => {
   erroriTile++;
   if(erroriTile >= 3 && !passatoAlSecondo){
-    passatoAlSecondo = true;
-    map.removeLayer(tilesA);
-    tilesB.addTo(map);
+    passatoAlSecondo = true; map.removeLayer(tilesA); tilesB.addTo(map);
   }
 });
 tilesA.addTo(map);
 
 const meIcon = L.divIcon({className:'', iconSize:[15,15], iconAnchor:[7,7],
-  html:'<div style="position:relative;width:15px;height:15px"><div class="me-pulse"></div><div class="me-dot"></div></div>'});
+  html:'<div class="me-wrap"><div class="me-pulse"></div>'
+     + '<svg class="me-beam" id="meBeam" viewBox="0 0 46 46"><defs><radialGradient id="bg" cx="50%" cy="0%" r="90%">'
+     + '<stop offset="0%" stop-color="#0071E3" stop-opacity=".55"/><stop offset="100%" stop-color="#0071E3" stop-opacity="0"/>'
+     + '</radialGradient></defs><path d="M23 23 L9 1 A26 26 0 0 1 37 1 Z" fill="url(#bg)"/></svg>'
+     + '<div class="me-dot"></div></div>'});
 const parkIcon = L.divIcon({className:'', iconSize:[32,32], iconAnchor:[16,16],
   html:'<div class="park-pin">🅿️</div>'});
 
 let meMarker = null, accCircle = null, linea = null;
-let pins = [];                 // tutte le soste confermate in questa sessione, come marker sulla mappa
-let seguendo = true;           // se true, la mappa segue la posizione a ogni aggiornamento
+let pins = [];
+let seguendo = true;
+let ruotaMappa = true;
+let headingCorrente = 0;
 
 function updateLocateBtn(){ $('#locate').classList.toggle('on', seguendo); }
+function updateCompassBtn(){ $('#compass').classList.toggle('on', !ruotaMappa); }
 map.on('dragstart', () => { seguendo = false; updateLocateBtn(); });
+
+function applicaRotazione(){
+  const ang = ruotaMappa ? -headingCorrente : 0;
+  $('#map').style.transform = 'rotate(' + ang + 'deg)';
+}
+
 $('#locate').onclick = () => {
   seguendo = true; updateLocateBtn();
-  collapsePanel(true);                       // ritira il pannello così il puntino resta visibile
   if(meMarker) map.setView(meMarker.getLatLng(), Math.max(map.getZoom(), 17), {animate:true});
 };
+$('#compass').onclick = () => { ruotaMappa = !ruotaMappa; updateCompassBtn(); applicaRotazione(); };
 $('#zIn').onclick = () => map.zoomIn();
 $('#zOut').onclick = () => map.zoomOut();
-
-/* --- pannello inferiore ritraibile ---------------------------------------
-   Scorrere in basso lo chiude, scorrere in alto lo riapre. La maniglia fa
-   da interruttore. Si chiude anche quando torni alla tua posizione, così il
-   puntino blu non finisce nascosto sotto il pannello.                    */
-const pannello = () => $('#pannello');
-function collapsePanel(on){
-  const el = pannello();
-  if(!el) return;
-  el.classList.toggle('collapsed', on);
-  if(!on) el.scrollTop = 0;
-}
-(function abilitaGesti(){
-  const el = pannello();
-  let y0 = null, top0 = 0;
-  const grip = $('#grip');
-  if(grip) grip.onclick = () => collapsePanel(!el.classList.contains('collapsed'));
-  // trascinamento verticale sul pannello: se sei già in cima e tiri giù, lo chiudi
-  el.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; top0 = el.scrollTop; }, {passive:true});
-  el.addEventListener('touchmove', e => {
-    if(y0 === null) return;
-    const dy = e.touches[0].clientY - y0;
-    if(top0 <= 0 && dy > 44){ collapsePanel(true); y0 = null; }        // tiro giù dall'alto → chiudi
-    else if(el.classList.contains('collapsed') && dy < -30){ collapsePanel(false); y0 = null; }  // tiro su → apri
-  }, {passive:true});
-  el.addEventListener('touchend', () => { y0 = null; }, {passive:true});
-})();
 
 function aggiornaMappa(p, acc){
   const ll = [p.lat, p.lon];
@@ -910,19 +922,29 @@ function aggiornaMappa(p, acc){
   }
   if(linea) linea.setLatLngs([ll, linea.getLatLngs()[1]]);
 }
+
+function aggiornaBeam(heading, muovendosi){
+  const beam = document.getElementById('meBeam');
+  if(!beam) return;
+  if(muovendosi){
+    beam.classList.add('on');
+    beam.style.transform = ruotaMappa ? 'rotate(0deg)' : ('rotate(' + heading + 'deg)');
+  } else {
+    beam.classList.remove('on');
+  }
+}
+
 function piazzaPin(pos, quando){
   const ll = [pos.lat, pos.lon];
   const m = L.marker(ll, {icon:parkIcon, zIndexOffset:900}).addTo(map);
-  m.bindPopup(`<div class="pop"><b>Parcheggiata alle ${fmtOra(quando)}</b><a href="https://maps.apple.com/?ll=${pos.lat.toFixed(6)},${pos.lon.toFixed(6)}" target="_blank" rel="noopener">Apri in Mappe →</a></div>`);
+  m.bindPopup('<div class="pop"><b>Parcheggiata alle ' + fmtOra(quando) + '</b><a href="https://maps.apple.com/?ll=' + pos.lat.toFixed(6) + ',' + pos.lon.toFixed(6) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
   pins.push(m);
   if(linea) map.removeLayer(linea);
-  linea = L.polyline([meMarker ? meMarker.getLatLng() : ll, ll], {color:'rgba(18,21,26,.4)', weight:2.5, dashArray:'2,7'}).addTo(map);
+  linea = L.polyline([meMarker ? meMarker.getLatLng() : ll, ll], {color:'rgba(0,113,227,.5)', weight:2.5, dashArray:'2,7'}).addTo(map);
   return m;
 }
 function rimuoviLinea(){ if(linea){ map.removeLayer(linea); linea = null; } }
 
-/* --- una posizione approssimativa subito, solo per centrare la mappa
-   prima ancora di premere "Inizia a seguire" ------------------------ */
 if('geolocation' in navigator){
   navigator.geolocation.getCurrentPosition(
     p => { if(!meMarker) map.setView([p.coords.latitude, p.coords.longitude], 15); },
@@ -930,46 +952,72 @@ if('geolocation' in navigator){
   );
 }
 
-/* --- parametri della rilevazione ---------------------------------------
-   La velocità dal GPS è rumorosa: due punti fermi possono sembrare a 3-4 km/h
-   per il solo errore di posizione. Serve isteresi (soglie diverse per entrare
-   e uscire da "in auto") e una conferma nel tempo, non un singolo campione. */
-const rapido = new URLSearchParams(location.search).has('rapido');   // per collaudare senza aspettare
-const SOGLIA_MOVIMENTO = 12;      // km/h: sopra qui, sei sicuramente in auto
-const SOGLIA_FERMO     = 4;       // km/h: sotto qui, sei sicuramente fermo
-const CONFERMA_MOTO_S  = rapido ? 2 : 8;     // quanto restare sopra soglia prima di dire "in auto"
-// due tempi di attesa per "fermo": corto se non ho modo di sapere se sei sceso,
-// molto più lungo se ho l'accelerometro e quindi il cronometro è solo una rete di sicurezza
-// (in coda o dopo un incidente puoi restare fermo per minuti senza aver affatto parcheggiato)
+/* ============================ SCHEDE ============================ */
+let schedaAttiva = 'stato';
+function mostraScheda(nome){
+  schedaAttiva = nome;
+  const el = $('#pannello');
+  if(nome === 'mappa'){
+    el.classList.add('collapsed');
+  } else {
+    el.classList.remove('collapsed');
+    $('#tabStato').classList.toggle('hidden', nome !== 'stato');
+    $('#tabViaggio').classList.toggle('hidden', nome !== 'viaggio');
+    $('#sheetBody').scrollTop = 0;
+    if(nome === 'viaggio') aggiornaStatistiche();
+  }
+  $('#navMappa').classList.toggle('on', nome === 'mappa');
+  $('#navStato').classList.toggle('on', nome === 'stato');
+  $('#navViaggio').classList.toggle('on', nome === 'viaggio');
+}
+$('#navMappa').onclick = () => mostraScheda('mappa');
+$('#navStato').onclick = () => mostraScheda('stato');
+$('#navViaggio').onclick = () => mostraScheda('viaggio');
+
+/* ============================ PARAMETRI ============================ */
+const rapido = new URLSearchParams(location.search).has('rapido');
+const SOGLIA_MOVIMENTO = 12;
+const SOGLIA_FERMO     = 4;
+const CONFERMA_MOTO_S  = rapido ? 2 : 8;
 const BACKSTOP_BASE_S   = rapido ? 6  : 75;
 const BACKSTOP_ESTESO_S = rapido ? 14 : 360;
-const DERIVA_MAX_M      = 20;     // oltre questa deriva "da fermo", è più probabile coda che avanza
-const CAMMINO_CONFERMA_M = 40;    // allontanamento a piedi dal punto di arresto che conferma subito
-const ACCURATEZZA_MAX  = 30;      // m: fix più imprecisi di così vengono scartati del tutto
-const FINESTRA         = 5;       // campioni su cui mediare la velocità
+const DERIVA_MAX_M      = 20;
+const ACCURATEZZA_MAX  = 30;
+const FINESTRA         = 5;
 
 let watchId = null, samples = [], vHist = [];
-let stato = 'fermo';              // 'fermo' | 'in_auto'
-let dalQuando = Date.now();       // da quando siamo in questo stato (candidato)
-let confermato = 'fermo';         // ultimo stato confermato e notificato
-let puntoFermo = null;            // {lat,lon,t} dove è iniziata la sosta candidata
+let stato = 'fermo';
+let dalQuando = Date.now();
+let confermato = 'fermo';
+let puntoFermo = null;
 let log = [];
 
-/* --- passi o vibrazione del motore? -------------------------------------
-   Il passo umano ha un ritmo riconoscibile (1,5-2,5 al secondo), molto
-   diverso dalle vibrazioni di un'auto ferma col motore acceso o dai
-   sobbalzi mentre sei seduto in coda. Non serve una FFT: basta contare i
-   picchi di accelerazione a distanza plausibile fra loro.             */
-let motionOn = false, passi = [], bufAcc = [];
+let viaggio = null;
+function resetViaggio(){ viaggio = {inizio: Date.now(), distanza: 0, vMax: 0, ultimoPunto: null, secondiInMoto: 0}; }
+
+/* ============================ PASSI ============================
+   Riconoscere la camminata dal ritmo dei picchi di accelerazione. Tolgo la
+   gravità (~9.8) e guardo l'oscillazione: a ogni passo il modulo sale e
+   scende attorno allo zero. Conto un passo quando l'oscillazione supera una
+   soglia dopo essere passata sotto (attraversamento), con un intervallo
+   plausibile fra un passo e l'altro (200-1000 ms = 1-5 passi/s).           */
+let motionOn = false, passi = [], accBuf = [], sopraSoglia = false;
+const SOGLIA_PASSO = 1.3;   // m/s² di oscillazione oltre la gravità
 function suPasso(m, t){
-  bufAcc.push(m); if(bufAcc.length > 12) bufAcc.shift();
-  const media = bufAcc.reduce((s,x)=>s+x,0)/bufAcc.length;
-  const sd = Math.sqrt(bufAcc.reduce((s,x)=>s+(x-media)**2,0)/bufAcc.length) || 0.01;
+  const osc = m - 9.81;                        // quanto ci si discosta dalla gravità
+  accBuf.push(Math.abs(osc)); if(accBuf.length > 20) accBuf.shift();
   const ultimo = passi[passi.length-1] || 0;
-  if(m - media > Math.max(1.1, sd*1.4) && t-ultimo > 250 && t-ultimo < 1000) passi.push(t);
-  passi = passi.filter(p => t-p < 4000);
+  // fronte di salita che supera la soglia: è la spinta del passo
+  if(!sopraSoglia && osc > SOGLIA_PASSO){
+    sopraSoglia = true;
+    if(t-ultimo > 200 && t-ultimo < 1200) passi.push(t);
+    else if(!passi.length || t-ultimo >= 1200) passi.push(t);
+  } else if(osc < SOGLIA_PASSO*0.4){
+    sopraSoglia = false;                        // tornati sotto: pronti al prossimo passo
+  }
+  passi = passi.filter(pp => t-pp < 4000);
 }
-const staCamminando = () => passi.length >= 5;
+const staCamminando = () => passi.length >= 3;
 function onMotion(e){
   const a = e.acceleration && e.acceleration.x != null ? e.acceleration : e.accelerationIncludingGravity;
   if(!a || a.x == null) return;
@@ -991,36 +1039,47 @@ function setPillMot(testo, ok){
   const p = $('#pillMot'); if(!p) return;
   p.textContent = testo; p.className = 'pill ' + (ok ? 'ok' : 'no');
 }
-if(rapido){                                                   // solo per i test automatici
+if(rapido){
   window.__feedMotion = (m, t) => suPasso(m, t);
   window.__testMotionOn = () => { motionOn = true; setPillMot('attivo (test)', true); };
   window.__debug = () => ({stato, confermato, dalQuando, puntoFermo, motionOn, ora: Date.now(), pins: pins.length,
-    tileA: map.hasLayer(tilesA), tileB: map.hasLayer(tilesB), erroriTile});
-  window.__testMotionOff = () => {                    // per simulare chi nega il permesso su iOS
+    tileA: map.hasLayer(tilesA), tileB: map.hasLayer(tilesB), erroriTile, heading: headingCorrente,
+    km: viaggio ? viaggio.distanza : 0, vMax: viaggio ? viaggio.vMax : 0});
+  window.__testMotionOff = () => {
     if(motionOn) removeEventListener('devicemotion', onMotion);
     motionOn = false; setPillMot('non concesso (test)', false);
   };
 }
 
+/* ============================ UTILI ============================ */
 const kmh = (d, dt) => dt > 0 ? (d/dt) * 3.6 : 0;
-function distanza(a, b){                       // haversine, metri
+function distanza(a, b){
   const R = 6371000, toRad = x => x*Math.PI/180;
   const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lon-a.lon);
   const s = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2;
   return 2*R*Math.asin(Math.min(1, Math.sqrt(s)));
 }
-
+function bearing(a, b){
+  const toRad = x => x*Math.PI/180, toDeg = x => x*180/Math.PI;
+  const dLon = toRad(b.lon-a.lon);
+  const y = Math.sin(dLon)*Math.cos(toRad(b.lat));
+  const x = Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat)) - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(dLon);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
 function fmtOra(t){ const d = new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
-
+function fmtDurata(ms){
+  const min = Math.round(ms/60000);
+  if(min < 60) return min + ' min';
+  return Math.floor(min/60) + 'h ' + (min%60) + 'm';
+}
 function setDot(on){ $('#dot').classList.toggle('on', on); }
 
+/* ============================ STATO A SCHERMO ============================ */
 function aggiornaUI(vMedia){
   const ico = $('#ico'), h1 = $('#stato'), sub = $('#sotto'), vel = $('#velocita');
   const inMovimentoOra = confermato === 'in_auto' && stato === 'in_auto';
   const segnaleDebole = fixImprecisiDiFila >= SEGNALE_DEBOLE_DOPO;
 
-  // il segnale scarso ha priorità sul resto solo quando NON stiamo già seguendo
-  // un movimento in corso: se sei chiaramente in auto, non serve allarmare.
   if(segnaleDebole && !inMovimentoOra){
     ico.textContent = '📡';
     h1.textContent = 'Segnale GPS debole';
@@ -1031,26 +1090,25 @@ function aggiornaUI(vMedia){
     return;
   }
 
-  ico.textContent = confermato === 'in_auto' ? '🚗' : '🅿️';
-  if(stato === 'in_auto' && confermato === 'fermo'){        // appena ripartito, in attesa di conferma
+  ico.textContent = confermato === 'in_auto' ? '🚗' : (confermato === 'parcheggiato' ? '🅿️' : '🧍');
+  if(stato === 'in_auto' && confermato !== 'in_auto'){
     h1.textContent = 'Forse sei ripartito…';
     sub.textContent = 'Confermo tra qualche secondo.';
   } else if(inMovimentoOra){
     h1.textContent = 'Sei in movimento';
-    sub.textContent = 'Ti avviso quando ti fermi per bene.';
-  } else if(stato === 'fermo' && confermato === 'in_auto'){  // appena fermo, in attesa di conferma
-    const backstop = motionOn ? BACKSTOP_ESTESO_S : BACKSTOP_BASE_S;
-    const rest = Math.max(0, Math.round((backstop*1000-(Date.now()-dalQuando))/1000));
-    if(motionOn && staCamminando()){
-      h1.textContent = 'Ti sei allontanato a piedi';
-      sub.textContent = 'Confermo tra un attimo.';
-    } else if(motionOn){
+    sub.textContent = "Appena scendi dall'auto, salvo dove l'hai lasciata.";
+  } else if(stato === 'fermo' && confermato === 'in_auto'){
+    if(motionOn){
       h1.textContent = 'Ti sei fermato';
-      sub.textContent = rest > 0 ? `Se non risali in auto, entro ${Math.ceil(rest/60)} min ti avviso comunque.` : 'Un attimo…';
+      sub.textContent = 'Se scendi e fai due passi, salvo il parcheggio subito.';
     } else {
+      const rest = Math.max(0, Math.round((BACKSTOP_BASE_S*1000-(Date.now()-dalQuando))/1000));
       h1.textContent = 'Ti sei fermato';
-      sub.textContent = rest > 0 ? `Se resti fermo, tra ${rest} s ti avviso.` : 'Un attimo…';
+      sub.textContent = rest > 0 ? ('Se resti fermo, tra ' + rest + ' s salvo il parcheggio.') : 'Un attimo…';
     }
+  } else if(confermato === 'parcheggiato'){
+    h1.textContent = 'Parcheggiata';
+    sub.textContent = 'Posizione salvata. La trovi nella scheda Viaggio.';
   } else {
     h1.textContent = 'Sei fermo';
     sub.textContent = 'Appena riparti in auto, lo noto.';
@@ -1058,63 +1116,73 @@ function aggiornaUI(vMedia){
   vel.textContent = vMedia != null ? Math.round(vMedia) + ' km/h · precisione ' + Math.round(lastAcc||0) + ' m' : '';
 }
 
-function notifica(pos){
+/* ============================ PARCHEGGIO ============================ */
+let ultimoUrlParcheggio = null;
+function salvaParcheggio(pos){
+  confermato = 'parcheggiato';
   const quando = Date.now();
-  const url = `https://maps.apple.com/?ll=${pos.lat.toFixed(6)},${pos.lon.toFixed(6)}`;
+  const url = 'https://maps.apple.com/?ll=' + pos.lat.toFixed(6) + ',' + pos.lon.toFixed(6);
   const marker = piazzaPin(pos, quando);
   log.unshift({t: quando, pos, url, marker});
   renderLog();
-  $('#toastSub').textContent = 'Ora locale ' + fmtOra(quando);
+  ultimoUrlParcheggio = url;
+  $('#toastSub').textContent = 'Alle ' + fmtOra(quando) + ' · tocca per aprire in Mappe';
   const t = $('#toast'); t.classList.add('on');
-  clearTimeout(notifica._h); notifica._h = setTimeout(() => t.classList.remove('on'), 4200);
+  clearTimeout(salvaParcheggio._h); salvaParcheggio._h = setTimeout(() => t.classList.remove('on'), 6000);
   if(navigator.vibrate) navigator.vibrate([40,60,40]);
   if('Notification' in window && Notification.permission === 'granted'){
     try{ new Notification('Hai parcheggiato qui', {
-      body: 'Tocca per aprire la posizione in Mappe.',
-      tag: 'parcheggio', icon: undefined
+      body: 'Tocca per aprire la posizione in Mappe.', tag: 'parcheggio'
     }).onclick = () => window.open(url, '_blank'); }catch(e){}
   }
 }
+$('#toast').onclick = () => { if(ultimoUrlParcheggio) window.open(ultimoUrlParcheggio, '_blank'); };
 
 function renderLog(){
   const el = $('#log');
-  if(!log.length){ el.innerHTML = '<div class="row"><span class="g"><span class="s">Ancora nessuna sosta rilevata.</span></span></div>'; return; }
-  el.innerHTML = log.slice(0,12).map((e,i) => `
-    <div class="row" data-i="${i}"><span class="g"><span class="k">Parcheggiata alle ${fmtOra(e.t)}</span>
-    <span class="s"><a href="${e.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apri in Mappe →</a></span></span></div>`).join('');
+  if(!log.length){ el.innerHTML = '<div class="row"><span class="g"><span class="s">Ancora nessun parcheggio. Comparirà qui appena scendi dall\'auto.</span></span></div>'; return; }
+  el.innerHTML = log.slice(0,12).map((e,i) =>
+    '<div class="row" data-i="' + i + '"><span class="g"><span class="k">Parcheggiata alle ' + fmtOra(e.t) + '</span>'
+    + '<span class="s"><a href="' + e.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apri in Mappe &rarr;</a></span></span></div>').join('');
   el.querySelectorAll('[data-i]').forEach(row => row.onclick = () => {
     const e = log[+row.dataset.i];
     seguendo = false; updateLocateBtn();
+    mostraScheda('mappa');
     map.setView([e.pos.lat, e.pos.lon], 18, {animate:true});
     e.marker.openPopup();
   });
 }
 
+/* ============================ STATISTICHE ============================ */
+function aggiornaStatistiche(){
+  if(!viaggio) return;
+  const km = viaggio.distanza/1000;
+  $('#stKm').textContent = km.toFixed(1).replace('.', ',');
+  $('#stDur').textContent = fmtDurata(Date.now() - viaggio.inizio);
+  const oreInMoto = viaggio.secondiInMoto/3600;
+  $('#stAvg').textContent = oreInMoto > 0.001 ? Math.round(km/oreInMoto) : 0;
+  $('#stMax').textContent = Math.round(viaggio.vMax);
+}
+
+/* ============================ GPS ============================ */
 let lastAcc = null;
-let fixImprecisiDiFila = 0;                // quanti fix consecutivi sono troppo deboli per fidarsi
-const SEGNALE_DEBOLE_DOPO = 2;             // dopo N fix deboli di fila, avvisiamo che il segnale è scarso
+let fixImprecisiDiFila = 0;
+const SEGNALE_DEBOLE_DOPO = 2;
 function onFix(p){
   const acc = p.coords.accuracy;
   lastAcc = acc; primoFixArrivato = true;
-  $('#acc').textContent = `Precisione ${Math.round(acc)} m`;
+  $('#acc').textContent = 'Precisione ' + Math.round(acc) + ' m';
   $('#pillGps').textContent = acc <= ACCURATEZZA_MAX ? 'buono' : 'debole';
   $('#pillGps').className = 'pill ' + (acc <= ACCURATEZZA_MAX ? 'ok' : 'no');
 
   const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now(), acc: acc};
-  // il pallino va mostrato sempre, anche con GPS impreciso: è meglio una
-  // posizione approssimativa (il cerchio intorno mostra quanto fidarsene)
-  // che uno schermo vuoto. La soglia stretta resta solo per il calcolo
-  // della velocità, dove il rumore causava le false partenze.
   aggiornaMappa(punto, acc);
   if(acc > ACCURATEZZA_MAX){
-    // segnale troppo debole per fidarsi: non calcoliamo la velocità, e se
-    // capita di continuo (galleria, treno, chiuso) lo diciamo apertamente
-    // invece di mostrare un "sei fermo" che non è vero.
     fixImprecisiDiFila++;
     if(fixImprecisiDiFila >= SEGNALE_DEBOLE_DOPO) aggiornaUI(null);
     return;
   }
-  fixImprecisiDiFila = 0;                             // segnale tornato buono
+  fixImprecisiDiFila = 0;
 
   samples.push(punto);
   if(samples.length > 2) samples.shift();
@@ -1125,48 +1193,57 @@ function onFix(p){
     if(dt > 0.3){
       const d = distanza(a,b);
       let v;
-      // La velocità del dispositivo, quando c'è, è la più affidabile: il chip GPS
-      // la ricava dall'effetto Doppler, non dai salti di posizione, quindi non
-      // gonfia quando sei fermo con segnale scarso. La preferiamo sempre.
       if(p.coords.speed != null && p.coords.speed >= 0){
         v = p.coords.speed * 3.6;
       } else {
-        // Nessuna velocità dal dispositivo: la stimiamo dalla distanza, ma
-        // scontiamo parte dell'incertezza. Sottrarre tutta l'incertezza
-        // azzererebbe anche i movimenti veri; ne togliamo circa metà, quanto
-        // basta a smorzare il tremolio da fermo senza cancellare la guida.
         const margine = 0.5 * (a.acc + b.acc);
-        const dNetto = Math.max(0, d - margine);
-        v = kmh(dNetto, dt);
+        v = kmh(Math.max(0, d - margine), dt);
       }
       vHist.push(v); if(vHist.length > FINESTRA) vHist.shift();
-      // mediana invece della media: un singolo salto anomalo non trascina la stima
       const ord = vHist.slice().sort((x,y)=>x-y);
       const vMedia = ord[Math.floor(ord.length/2)];
+
+      // direzione di marcia dal GPS (non dalla bussola), solo se ci muoviamo
+      if(p.coords.heading != null && p.coords.heading >= 0 && vMedia > 5){
+        headingCorrente = p.coords.heading;
+      } else if(d > 4 && vMedia > 5){
+        headingCorrente = bearing(a, b);
+      }
+      const muovendosi = vMedia > 5;
+      aggiornaBeam(headingCorrente, muovendosi);
+      if(muovendosi && ruotaMappa && seguendo) applicaRotazione();
+
+      // statistiche viaggio
+      if(viaggio){
+        if(viaggio.ultimoPunto && d < 200 && vMedia > SOGLIA_FERMO){
+          viaggio.distanza += d; viaggio.secondiInMoto += dt;
+        }
+        if(vMedia > viaggio.vMax && vMedia < 250) viaggio.vMax = vMedia;
+        viaggio.ultimoPunto = punto;
+        if(schedaAttiva === 'viaggio') aggiornaStatistiche();
+      }
 
       const ora = Date.now();
       if(vMedia >= SOGLIA_MOVIMENTO){
         if(stato !== 'in_auto'){ stato = 'in_auto'; dalQuando = ora; }
         if(confermato !== 'in_auto' && ora-dalQuando >= CONFERMA_MOTO_S*1000){
           confermato = 'in_auto'; puntoFermo = null; passi = []; rimuoviLinea();
+          if(!viaggio) resetViaggio();
         }
       } else if(vMedia <= SOGLIA_FERMO){
         if(stato !== 'fermo'){ stato = 'fermo'; dalQuando = ora; puntoFermo = punto; }
         else if(puntoFermo && distanza(puntoFermo, punto) > DERIVA_MAX_M){
-          // ti sei spostato troppo per essere "fermo fermo": più probabile coda che avanza a scatti
           puntoFermo = punto; dalQuando = ora;
         }
       }
-      // fra le due soglie di velocità non si cambia stato di colpo, ma il confronto
-      // con la deriva e con i passi resta valido: la coda che avanza piano ricade qui
 
-      if(confermato !== 'fermo' && stato === 'fermo' && puntoFermo){
-        const allontanato = distanza(puntoFermo, punto) > CAMMINO_CONFERMA_M;
+      // il parcheggio: eri in auto, ti sei fermato, e ora cammini → salva SUBITO
+      if(confermato === 'in_auto' && stato === 'fermo' && puntoFermo){
         const backstop = motionOn ? BACKSTOP_ESTESO_S : BACKSTOP_BASE_S;
-        if(motionOn && staCamminando() && allontanato){
-          confermato = 'fermo'; notifica(puntoFermo);              // conferma rapida: sei sceso e cammini
+        if(motionOn && staCamminando()){
+          salvaParcheggio(puntoFermo);
         } else if(ora-dalQuando >= backstop*1000){
-          confermato = 'fermo'; notifica(puntoFermo);              // rete di sicurezza sul tempo
+          salvaParcheggio(puntoFermo);
         }
       }
       aggiornaUI(vMedia);
@@ -1178,19 +1255,16 @@ function onFix(p){
 
 let primoFixArrivato = false;
 function onErr(e){
-  // code 1 = permesso negato (definitivo) · 2 = posizione irraggiungibile · 3 = timeout
   if(e.code === 1){
     $('#stato').textContent = 'Serve il permesso';
     $('#sotto').textContent = 'Consenti la posizione nelle impostazioni del browser, poi riavvia.';
     $('#pillGps').textContent = 'negato'; $('#pillGps').className = 'pill no';
   } else if(e.code === 3){
-    // timeout: NON è un fallimento definitivo, watchPosition continua a provare da solo
     if(!primoFixArrivato){
       $('#sotto').textContent = 'Sto ancora cercando il segnale…';
       $('#pillGps').textContent = 'in cerca'; $('#pillGps').className = 'pill no';
     }
   } else {
-    // posizione momentaneamente irraggiungibile (tipico su un PC senza GPS)
     if(!primoFixArrivato){
       $("#sotto").textContent = "Segnale assente. Su un computer fisso è normale: provala sul telefono, all'aperto.";
       $('#pillGps').textContent = 'assente'; $('#pillGps').className = 'pill no';
@@ -1198,10 +1272,13 @@ function onErr(e){
   }
 }
 
+/* ============================ AVVIO / STOP ============================ */
 function avvia(){
   samples = []; vHist = []; stato = 'fermo'; confermato = 'fermo'; dalQuando = Date.now(); puntoFermo = null;
+  resetViaggio();
   $('#startWrap').classList.add('hidden');
   $('#pannello').classList.remove('hidden');
+  mostraScheda('stato');
   setDot(true);
   aggiornaUI(null);
   if('Notification' in window && Notification.permission === 'default'){
@@ -1225,7 +1302,8 @@ function ferma(){
   if(watchId != null) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   if(motionOn) removeEventListener('devicemotion', onMotion);
-  motionOn = false; passi = []; bufAcc = [];
+  motionOn = false; passi = []; accBuf = []; sopraSoglia = false;
+  headingCorrente = 0; applicaRotazione();
   setDot(false);
   $('#pannello').classList.add('hidden');
   $('#startWrap').classList.remove('hidden');
@@ -1241,6 +1319,7 @@ $('#btnStart').onclick = () => {
 };
 $('#btnStop').onclick = ferma;
 renderLog();
+updateCompassBtn();
 })();
 </script>
 </body>
