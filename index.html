@@ -675,12 +675,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	}
 
 :root{
-  --bg:#F2F1EC; --surface:#FFF; --hair:#E7E5DE; --ink:#12151A; --ink-2:#7C8189; --ink-3:#A3A7AD;
-  --blue:#1D5BFF; --green:#00B87A; --amber:#FFB61E; --red:#F0472F;
+  /* palette UrbanFlow: sfondo bianco, grigi e accenti Apple/iOS */
+  --bg:#FFFFFF; --surface:#FFFFFF; --hair:#E8E8ED; --ink:#1D1D1F; --ink-2:#86868B; --ink-3:#AEAEB2;
+  --blue:#0071E3; --green:#34C759; --amber:#FF9F0A; --red:#FF3B30;
+  --panel:#F5F5F7;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;
+body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;letter-spacing:-0.011em}
 .wrap{height:100dvh;position:relative;overflow:hidden}
 
@@ -699,7 +701,7 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
 .card p{margin:1px 0 0;font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .speed{font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--ink-3);margin-top:1px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:0 0 auto;margin-left:auto;align-self:flex-start;margin-top:3px}
-.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(0,184,122,.18)}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px rgba(52,199,89,.20)}
 
 .tools{top:calc(12px + env(safe-area-inset-top));right:12px;display:flex;flex-direction:column;overflow:hidden;border-radius:14px}
 .tools button{width:42px;height:42px;border:0;background:none;color:var(--ink);cursor:pointer;
@@ -712,7 +714,7 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
 .startWrap{left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));padding:16px;text-align:center}
 .startWrap p{margin:0 0 12px;font-size:13px;color:var(--ink-2);line-height:1.45}
 
-.me-pulse{position:absolute;inset:-13px;border-radius:50%;background:rgba(29,91,255,.28);animation:pulse 2.4s ease-out infinite}
+.me-pulse{position:absolute;inset:-13px;border-radius:50%;background:rgba(0,113,227,.28);animation:pulse 2.4s ease-out infinite}
 @keyframes pulse{0%{transform:scale(.35);opacity:.75}100%{transform:scale(1.7);opacity:0}}
 .me-dot{width:15px;height:15px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .park-pin{width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
@@ -721,12 +723,12 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
 .pop a{color:var(--blue);font-size:12.5px;font-weight:500;text-decoration:none}
 
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:410;
-  background:var(--bg);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
+  background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
   padding:8px 16px calc(14px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;-webkit-overflow-scrolling:touch;
   transition:transform .32s cubic-bezier(.32,.72,0,1);will-change:transform}
 /* pannello ritratto: resta visibile solo la maniglia in cima, il resto scivola fuori schermo */
 .sheet.collapsed{transform:translateY(calc(100% - 30px))}
-.grip{position:sticky;top:0;z-index:2;margin:-8px -16px 4px;padding:10px 16px 6px;background:var(--bg);
+.grip{position:sticky;top:0;z-index:2;margin:-8px -16px 4px;padding:10px 16px 6px;background:var(--panel);
   border-radius:20px 20px 0 0;cursor:pointer;display:flex;justify-content:center}
 .grip::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#D6D4CC;transition:background .2s}
 .grip:active::before{background:#B8B5AC}
@@ -737,8 +739,8 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
 .row .k{font-weight:500}
 .row .s{font-size:12.5px;color:var(--ink-2);margin-top:1px;display:block}
 .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
-.pill.ok{background:rgba(0,184,122,.14);color:#00875E}
-.pill.no{background:rgba(240,71,47,.12);color:#C93A24}
+.pill.ok{background:rgba(52,199,89,.15);color:#248A3D}
+.pill.no{background:rgba(255,59,48,.12);color:#D70015}
 
 .log .row{cursor:pointer}
 .log .row:active{background:#FAF9F6}
@@ -896,7 +898,7 @@ function aggiornaMappa(p, acc){
   const ll = [p.lat, p.lon];
   if(!meMarker){
     meMarker = L.marker(ll, {icon:meIcon, zIndexOffset:1000}).addTo(map);
-    accCircle = L.circle(ll, {radius:acc, color:'#1D5BFF', weight:1, fillColor:'#1D5BFF', fillOpacity:.07, opacity:.22}).addTo(map);
+    accCircle = L.circle(ll, {radius:acc, color:'#0071E3', weight:1, fillColor:'#0071E3', fillOpacity:.07, opacity:.22}).addTo(map);
     map.setView(ll, 17);
   } else {
     meMarker.setLatLng(ll);
