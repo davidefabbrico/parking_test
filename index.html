@@ -724,23 +724,32 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .me-beam.on{opacity:1}
 .park-pin{width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
   font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18);border:2.5px solid var(--blue)}
+.home-pin{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:17px;box-shadow:0 1px 3px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18);border:2.5px solid var(--green)}
 .pop b{display:block;font-size:13px;margin-bottom:2px}
 .pop a{color:var(--blue);font-size:12.5px;font-weight:500;text-decoration:none}
 
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:410;
-  background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
-  display:flex;flex-direction:column;max-height:56dvh;
-  transition:transform .32s cubic-bezier(.32,.72,0,1);will-change:transform}
-.sheet.collapsed{transform:translateY(calc(100% - 58px - env(safe-area-inset-bottom)))}
-.sheet.collapsed .sheetBody{opacity:0;pointer-events:none}
-.sheetBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 6px}
-.tabs{display:flex;border-top:1px solid var(--hair);background:var(--panel);
-  padding:6px 8px calc(6px + env(safe-area-inset-bottom));flex:0 0 auto}
+/* la barra di navigazione è FISSA in fondo, sempre visibile e premibile */
+.tabs{position:absolute;left:0;right:0;bottom:0;z-index:420;display:none;
+  border-top:1px solid var(--hair);background:rgba(245,245,247,.96);
+  backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
 .tabs button{flex:1;border:0;background:none;cursor:pointer;padding:5px 0 3px;
   display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-3);font:inherit;font-size:10.5px;font-weight:500}
 .tabs button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .tabs button.on{color:var(--blue)}
 .tabs button:active{opacity:.6}
+.tabs.on{display:flex}
+
+/* il pannello contenuto sta SOPRA la barra fissa; quando è ritratto scompare
+   del tutto sotto la barra, senza portarsela via */
+.sheet{position:absolute;left:0;right:0;z-index:410;
+  bottom:calc(52px + env(safe-area-inset-bottom));
+  background:var(--panel);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
+  display:flex;flex-direction:column;max-height:52dvh;
+  transition:transform .32s cubic-bezier(.32,.72,0,1);will-change:transform}
+.sheet.collapsed{transform:translateY(calc(100% + 60px))}
+.sheetBody{overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 6px}
 
 .card2{background:var(--surface);border-radius:16px;padding:4px 0;box-shadow:0 1px 2px rgba(0,0,0,.05);margin-bottom:10px}
 .row{display:flex;align-items:center;gap:12px;padding:12px 15px;font-size:14px}
@@ -768,13 +777,51 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .btn:active{transform:scale(.99)}
 .note{font-size:11.5px;color:var(--ink-3);text-align:center;margin:10px 4px 4px;line-height:1.5}
 
-.toast{position:fixed;left:16px;right:16px;bottom:calc(74px + env(safe-area-inset-bottom));
+.toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));
   background:var(--ink);color:#fff;border-radius:16px;padding:14px 16px;display:flex;gap:11px;align-items:center;
-  box-shadow:0 12px 32px rgba(0,0,0,.28);transform:translateY(200%);transition:transform .35s cubic-bezier(.32,.72,0,1);z-index:900;cursor:pointer}
-.toast.on{transform:translateY(0)}
+  box-shadow:0 12px 32px rgba(0,0,0,.28);transform:translateY(300%);transition:transform .35s cubic-bezier(.32,.72,0,1);z-index:900;cursor:pointer;opacity:0}
+.toast.on{transform:translateY(0);opacity:1}
 .toast .ico{font-size:22px}
 .toast b{display:block;font-size:14.5px;font-weight:600}
 .toast span{font-size:12.5px;opacity:.75}
+
+/* pagina Account: copre tutto (mappa nascosta), sta sotto la barra fissa */
+.accountPage{position:absolute;left:0;right:0;top:0;bottom:calc(52px + env(safe-area-inset-bottom));
+  z-index:415;background:var(--bg);overflow:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(16px + env(safe-area-inset-top)) 16px 18px}
+.accountPage h1{font-size:26px;font-weight:700;letter-spacing:-0.03em;margin:4px 2px 2px}
+.accountPage .sub{color:var(--ink-2);font-size:13.5px;margin:0 2px 18px}
+
+/* riga con icona colorata a sinistra (rifiuti, pulizia, cantieri) */
+.irow{display:flex;gap:12px;padding:13px 15px;font-size:14px;align-items:flex-start}
+.irow+.irow{border-top:1px solid var(--hair)}
+.iico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;color:#fff;font-size:15px}
+.irow .g{flex:1;min-width:0}
+.irow .k{font-weight:500;display:block}
+.irow .s{font-size:12.5px;color:var(--ink-2);margin-top:2px;line-height:1.35;display:block}
+.irow .dotc{width:11px;height:11px;border-radius:50%;flex:0 0 auto;margin-top:5px}
+
+/* striscia settimanale dei rifiuti */
+.week{display:flex;gap:6px;padding:12px 15px 14px}
+.week div{flex:1;text-align:center;font-size:10.5px;color:var(--ink-3)}
+.week i{display:block;width:100%;height:7px;border-radius:4px;margin-bottom:5px}
+.week .now{color:var(--ink);font-weight:700}
+
+.crosshair{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;z-index:405;pointer-events:none;
+  display:none}
+.crosshair.on{display:block}
+.crosshair::before,.crosshair::after{content:"";position:absolute;background:var(--green)}
+.crosshair::before{left:50%;top:0;width:2px;height:100%;margin-left:-1px}
+.crosshair::after{top:50%;left:0;height:2px;width:100%;margin-top:-1px}
+.crosshair span{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;
+  background:rgba(52,199,89,.25);border:2px solid var(--green)}
+.setHomeBar{left:16px;right:16px;top:calc(70px + env(safe-area-inset-top));padding:12px 14px;text-align:center;display:none}
+.setHomeBar.on{display:block}
+.setHomeBar p{margin:0 0 10px;font-size:13px;color:var(--ink-2);line-height:1.4}
+.setHomeBar .rowb{display:flex;gap:8px}
+.setHomeBar button{flex:1;border:0;border-radius:999px;padding:11px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.setHomeBar .ok{background:var(--green);color:#fff}
+.setHomeBar .no{background:var(--surface);color:var(--ink-2);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 
 .hidden{display:none}
 </style>
@@ -805,6 +852,15 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
       <p>Tieni questa pagina aperta mentre guidi.<br>Appena scendi dall'auto, ti dico dove l'hai lasciata.</p>
       <button class="btn" id="btnStart">Inizia a seguire</button>
     </div>
+
+    <div class="crosshair" id="crosshair"><span></span></div>
+    <div class="float setHomeBar" id="setHomeBar">
+      <p>Sposta la mappa così che il centro (il mirino verde) sia su casa tua.</p>
+      <div class="rowb">
+        <button class="no" id="setHomeCancel">Annulla</button>
+        <button class="ok" id="setHomeOk">È qui casa</button>
+      </div>
+    </div>
   </div>
 
   <div id="pannello" class="sheet hidden">
@@ -833,13 +889,16 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
         <div class="card2 log" id="log"></div>
       </section>
     </div>
-
-    <nav class="tabs">
-      <button id="navMappa" aria-label="Mappa"><svg viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Mappa</button>
-      <button id="navStato" class="on" aria-label="Stato"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.5 2.5"/></svg>Stato</button>
-      <button id="navViaggio" aria-label="Viaggio"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 15l5-4 4 3 7-6"/></svg>Viaggio</button>
-    </nav>
   </div>
+
+  <div class="accountPage hidden" id="accountPage"></div>
+
+  <nav class="tabs">
+    <button id="navMappa" aria-label="Mappa"><svg viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Mappa</button>
+    <button id="navStato" class="on" aria-label="Stato"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.5 2.5"/></svg>Stato</button>
+    <button id="navViaggio" aria-label="Viaggio"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 15l5-4 4 3 7-6"/></svg>Viaggio</button>
+    <button id="navAccount" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>Account</button>
+  </nav>
 </div>
 
 <div class="toast" id="toast">
@@ -934,16 +993,84 @@ function aggiornaBeam(heading, muovendosi){
   }
 }
 
-function piazzaPin(pos, quando){
+function piazzaPin(pos, quando, avviso){
   const ll = [pos.lat, pos.lon];
   const m = L.marker(ll, {icon:parkIcon, zIndexOffset:900}).addTo(map);
-  m.bindPopup('<div class="pop"><b>Parcheggiata alle ' + fmtOra(quando) + '</b><a href="https://maps.apple.com/?ll=' + pos.lat.toFixed(6) + ',' + pos.lon.toFixed(6) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
+  const extra = avviso ? '<span style="display:block;color:#D70015;font-size:11.5px;margin:3px 0 4px">⚠️ ' + esc(avviso) + '</span>' : '';
+  m.bindPopup('<div class="pop"><b>Parcheggiata alle ' + fmtOra(quando) + '</b>' + extra + '<a href="https://maps.apple.com/?ll=' + pos.lat.toFixed(6) + ',' + pos.lon.toFixed(6) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
   pins.push(m);
   if(linea) map.removeLayer(linea);
   linea = L.polyline([meMarker ? meMarker.getLatLng() : ll, ll], {color:'rgba(0,113,227,.5)', weight:2.5, dashArray:'2,7'}).addTo(map);
   return m;
 }
 function rimuoviLinea(){ if(linea){ map.removeLayer(linea); linea = null; } }
+
+/* ============================ DATI DEL CITTADINO ============================
+   Senza una fonte reale collegabile, questi dati (rifiuti, pulizia strade,
+   cantieri) sono inventati ma COERENTI: dipendono in modo deterministico
+   dalla posizione, così la stessa via dà sempre le stesse informazioni.   */
+const GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+const GG = ['D','L','M','M','G','V','S'];
+const RIFIUTI = {
+  organico: {nome:'Organico',           col:'#8A6D3B', emoji:'🥬'},
+  plastica: {nome:'Plastica e lattine', col:'#F0B90B', emoji:'🥤'},
+  carta:    {nome:'Carta e cartone',    col:'#2A7DE1', emoji:'📦'},
+  vetro:    {nome:'Vetro',              col:'#2FA84F', emoji:'🍾'},
+  indiff:   {nome:'Indifferenziato',    col:'#6B6B70', emoji:'🗑️'},
+  nessuno:  {nome:'Nessun ritiro',      col:'#D0D0D5', emoji:'—'}
+};
+const SCHEMI = [
+  ['nessuno','organico','carta','organico','plastica','organico','vetro'],
+  ['nessuno','plastica','organico','vetro','organico','carta','organico'],
+  ['organico','carta','indiff','plastica','organico','vetro','nessuno']
+];
+const FASCE = [[6,9],[8,11],[14,17],[0,6]];
+const CANTIERI = ['rifacimento del manto stradale','posa della fibra ottica','allaccio del gas','rifacimento dei marciapiedi','sostituzione delle condotte'];
+const FINE_LAVORI = ['14 ottobre','2 novembre','28 ottobre','9 novembre','21 ottobre'];
+function hashPos(lat, lon){
+  const a = Math.round(lat*100), b = Math.round(lon*100);   // ~1 km di risoluzione
+  let h = (Math.imul(a, 73856093) ^ Math.imul(b, 19349663)) >>> 0;
+  h = (h ^ (h>>>13)) >>> 0; h = Math.imul(h, 1274126177) >>> 0;
+  return (h ^ (h>>>16)) >>> 0;
+}
+function datiComune(lat, lon){
+  const h = hashPos(lat, lon);
+  return {
+    zona: String.fromCharCode(65 + (h % 6)),
+    cal: SCHEMI[h % SCHEMI.length],
+    pulizia: { giorno: 1 + (h % 6), fascia: FASCE[(h>>3) % FASCE.length], lato: (h & 1) ? 'pari' : 'dispari' },
+    lavori: ((h>>5) % 100) < 22 ? { che: CANTIERI[(h>>7)%CANTIERI.length], fino: FINE_LAVORI[(h>>9)%FINE_LAVORI.length] } : null
+  };
+}
+function oreAllaPulizia(dc){
+  const g = giornoOggi(), m = minutiOggi();
+  let dd = (dc.pulizia.giorno - g + 7) % 7;
+  let h = dd*24 + dc.pulizia.fascia[0] - m/60;
+  if(h < -((dc.pulizia.fascia[1]-dc.pulizia.fascia[0]))) h += 7*24;   // se già passata oggi, prossima settimana
+  return h;
+}
+const giornoOggi = () => new Date().getDay();
+const minutiOggi = () => { const d = new Date(); return d.getHours()*60 + d.getMinutes(); };
+const hhmm = h => String(Math.floor(h)).padStart(2,'0') + ':00';
+
+/* ============================ MEMORIA PERSISTENTE ============================
+   La pagina è ospitata (GitHub Pages), quindi possiamo ricordare casa e le
+   statistiche di sempre fra un uso e l'altro. Tutto locale sul telefono.   */
+function leggi(chiave, base){ try{ const v = localStorage.getItem(chiave); return v ? JSON.parse(v) : base; }catch(e){ return base; } }
+function scrivi(chiave, val){ try{ localStorage.setItem(chiave, JSON.stringify(val)); }catch(e){} }
+let casa = leggi('parkCasa', null);          // {lat, lon}
+let vita = leggi('parkVita', {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0});
+function salvaVita(){ scrivi('parkVita', vita); }
+
+let homeMarker = null;
+function disegnaCasa(){
+  if(!casa) return;
+  const homeIcon = L.divIcon({className:'', iconSize:[34,34], iconAnchor:[17,17], html:'<div class="home-pin">🏠</div>'});
+  if(homeMarker) map.removeLayer(homeMarker);
+  homeMarker = L.marker([casa.lat, casa.lon], {icon:homeIcon, zIndexOffset:800}).addTo(map);
+  homeMarker.bindPopup('<div class="pop"><b>Casa</b><a href="https://maps.apple.com/?ll=' + casa.lat.toFixed(6) + ',' + casa.lon.toFixed(6) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
+}
+disegnaCasa();
 
 if('geolocation' in navigator){
   navigator.geolocation.getCurrentPosition(
@@ -956,23 +1083,51 @@ if('geolocation' in navigator){
 let schedaAttiva = 'stato';
 function mostraScheda(nome){
   schedaAttiva = nome;
-  const el = $('#pannello');
-  if(nome === 'mappa'){
-    el.classList.add('collapsed');
+  const sheet = $('#pannello'), acc = $('#accountPage');
+  if(nome === 'account'){
+    acc.classList.remove('hidden');
+    sheet.classList.add('collapsed');
+    renderAccount();
   } else {
-    el.classList.remove('collapsed');
-    $('#tabStato').classList.toggle('hidden', nome !== 'stato');
-    $('#tabViaggio').classList.toggle('hidden', nome !== 'viaggio');
-    $('#sheetBody').scrollTop = 0;
-    if(nome === 'viaggio') aggiornaStatistiche();
+    acc.classList.add('hidden');
+    if(nome === 'mappa'){
+      sheet.classList.add('collapsed');
+    } else {
+      sheet.classList.remove('collapsed');
+      $('#tabStato').classList.toggle('hidden', nome !== 'stato');
+      $('#tabViaggio').classList.toggle('hidden', nome !== 'viaggio');
+      $('#sheetBody').scrollTop = 0;
+      if(nome === 'viaggio') aggiornaStatistiche();
+    }
   }
-  $('#navMappa').classList.toggle('on', nome === 'mappa');
-  $('#navStato').classList.toggle('on', nome === 'stato');
-  $('#navViaggio').classList.toggle('on', nome === 'viaggio');
+  const map4 = [['mappa','#navMappa'],['stato','#navStato'],['viaggio','#navViaggio'],['account','#navAccount']];
+  for(const [n,id] of map4) $(id).classList.toggle('on', nome === n);
 }
 $('#navMappa').onclick = () => mostraScheda('mappa');
 $('#navStato').onclick = () => mostraScheda('stato');
 $('#navViaggio').onclick = () => mostraScheda('viaggio');
+$('#navAccount').onclick = () => mostraScheda('account');
+
+/* ============================ IMPOSTA CASA ============================ */
+let ultimaPosizione = null;    // ultimo fix valido, per "usa posizione attuale"
+function iniziaImpostaCasa(){
+  mostraScheda('mappa');
+  $('#crosshair').classList.add('on');
+  $('#setHomeBar').classList.add('on');
+  if(casa) map.setView([casa.lat, casa.lon], 17);
+  else if(ultimaPosizione) map.setView([ultimaPosizione.lat, ultimaPosizione.lon], 17);
+  ruotaMappa = false; updateCompassBtn(); applicaRotazione();   // niente rotazione mentre si punta casa
+}
+function fineImpostaCasa(){ $('#crosshair').classList.remove('on'); $('#setHomeBar').classList.remove('on'); }
+$('#setHomeCancel').onclick = fineImpostaCasa;
+$('#setHomeOk').onclick = () => {
+  const c = map.getCenter();
+  casa = {lat: c.lat, lon: c.lng};
+  scrivi('parkCasa', casa);
+  disegnaCasa();
+  fineImpostaCasa();
+  mostraScheda('account');
+};
 
 /* ============================ PARAMETRI ============================ */
 const rapido = new URLSearchParams(location.search).has('rapido');
@@ -1066,6 +1221,7 @@ function bearing(a, b){
   const x = Math.cos(toRad(a.lat))*Math.sin(toRad(b.lat)) - Math.sin(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.cos(dLon);
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
+const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 function fmtOra(t){ const d = new Date(t); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function fmtDurata(ms){
   const min = Math.round(ms/60000);
@@ -1122,17 +1278,27 @@ function salvaParcheggio(pos){
   confermato = 'parcheggiato';
   const quando = Date.now();
   const url = 'https://maps.apple.com/?ll=' + pos.lat.toFixed(6) + ',' + pos.lon.toFixed(6);
-  const marker = piazzaPin(pos, quando);
-  log.unshift({t: quando, pos, url, marker});
+  // controllo la pulizia strade nel punto dove parcheggi
+  const dc = datiComune(pos.lat, pos.lon);
+  const ore = oreAllaPulizia(dc);
+  let avviso = null;
+  if(ore < 1) avviso = 'Qui la pulizia strade è in corso o imminente: rischi la rimozione. Meglio spostarsi.';
+  else if(ore < 10) avviso = 'Attenzione: pulizia strade fra ' + Math.round(ore) + ' ore (' + GIORNI[dc.pulizia.giorno] + ' ' + hhmm(dc.pulizia.fascia[0]) + '), lato civici ' + dc.pulizia.lato + '.';
+  const marker = piazzaPin(pos, quando, avviso);
+  log.unshift({t: quando, pos, url, marker, avviso});
   renderLog();
+  vita.parcheggi++; salvaVita();
   ultimoUrlParcheggio = url;
-  $('#toastSub').textContent = 'Alle ' + fmtOra(quando) + ' · tocca per aprire in Mappe';
+  const titolo = avviso ? '⚠️ Occhio alla pulizia strade' : 'Hai parcheggiato qui';
+  $('#toast').querySelector('b').textContent = avviso ? 'Occhio alla pulizia strade' : 'Hai parcheggiato qui';
+  $('#toast').querySelector('.ico').textContent = avviso ? '⚠️' : '🅿️';
+  $('#toastSub').textContent = avviso ? avviso : ('Alle ' + fmtOra(quando) + ' · tocca per aprire in Mappe');
   const t = $('#toast'); t.classList.add('on');
-  clearTimeout(salvaParcheggio._h); salvaParcheggio._h = setTimeout(() => t.classList.remove('on'), 6000);
-  if(navigator.vibrate) navigator.vibrate([40,60,40]);
+  clearTimeout(salvaParcheggio._h); salvaParcheggio._h = setTimeout(() => t.classList.remove('on'), avviso ? 9000 : 6000);
+  if(navigator.vibrate) navigator.vibrate(avviso ? [60,50,60,50,60] : [40,60,40]);
   if('Notification' in window && Notification.permission === 'granted'){
-    try{ new Notification('Hai parcheggiato qui', {
-      body: 'Tocca per aprire la posizione in Mappe.', tag: 'parcheggio'
+    try{ new Notification(titolo, {
+      body: avviso ? avviso : 'Tocca per aprire la posizione in Mappe.', tag: 'parcheggio'
     }).onclick = () => window.open(url, '_blank'); }catch(e){}
   }
 }
@@ -1164,6 +1330,69 @@ function aggiornaStatistiche(){
   $('#stMax').textContent = Math.round(viaggio.vMax);
 }
 
+/* ============================ PAGINA ACCOUNT ============================ */
+function iconaRifiuti(k){ const r = RIFIUTI[k]; return '<span class="iico" style="background:' + r.col + '">' + r.emoji + '</span>'; }
+function bloccoCasa(){
+  if(!casa){
+    return '<div class="card2"><div class="irow"><span class="iico" style="background:var(--green)">🏠</span>'
+      + '<span class="g"><span class="k">Imposta la posizione di casa</span>'
+      + '<span class="s">Ti mostro qui i giorni della raccolta rifiuti, la pulizia strade e i cantieri della tua zona.</span></span></div></div>'
+      + '<button class="btn" id="btnCasaAttuale">Usa la posizione attuale</button>'
+      + '<button class="btn ghost" id="btnCasaMappa">Scegli sulla mappa</button>';
+  }
+  const dc = datiComune(casa.lat, casa.lon);
+  const g = giornoOggi();
+  const oggi = RIFIUTI[dc.cal[g]], domani = RIFIUTI[dc.cal[(g+1)%7]];
+  const ore = oreAllaPulizia(dc);
+  const week = dc.cal.map((k,i) => '<div class="' + (i===g?'now':'') + '"><i style="background:' + RIFIUTI[k].col + '"></i>' + GG[i] + '</div>').join('');
+  const quando = ore < 1 ? 'in corso ora' : ore < 24 ? 'tra ' + Math.round(ore) + ' ore' : 'tra ' + Math.round(ore/24) + ' giorni';
+  return '<div class="card2">'
+    + '<div class="irow"><span class="iico" style="background:var(--green)">🏠</span>'
+      + '<span class="g"><span class="k">Casa · zona ' + dc.zona + '</span><span class="s">Dati del Comune per la tua zona</span></span></div>'
+    + '<div class="irow">' + iconaRifiuti(dc.cal[g])
+      + '<span class="g"><span class="k">' + (dc.cal[g]==='nessuno' ? 'Stasera nessun ritiro' : 'Stasera esci: ' + esc(oggi.nome)) + '</span>'
+      + '<span class="s">Domani: ' + esc(domani.nome.toLowerCase()) + ' · esposizione 20:00–24:00</span></span></div>'
+    + '<div class="week">' + week + '</div>'
+    + '<div class="irow"><span class="iico" style="background:' + (ore<12?'var(--red)':'#2A7DE1') + '">🧹</span>'
+      + '<span class="g"><span class="k">Pulizia strade: ' + GIORNI[dc.pulizia.giorno] + ' ' + hhmm(dc.pulizia.fascia[0]) + '–' + hhmm(dc.pulizia.fascia[1]) + '</span>'
+      + '<span class="s">Lato civici ' + dc.pulizia.lato + ' · ' + quando + '</span></span></div>'
+    + '<div class="irow"><span class="iico" style="background:' + (dc.lavori?'var(--amber)':'#C7C7CC') + '">🚧</span>'
+      + '<span class="g"><span class="k">' + (dc.lavori ? 'Cantiere: ' + esc(dc.lavori.che) : 'Nessun cantiere') + '</span>'
+      + '<span class="s">' + (dc.lavori ? 'Fino al ' + dc.lavori.fino : 'Nessun lavoro segnalato nella tua via') + '</span></span></div>'
+    + '</div>'
+    + '<button class="btn ghost" id="btnCasaVedi">Vedi casa sulla mappa</button>'
+    + '<button class="btn ghost" id="btnCasaCambia">Cambia posizione di casa</button>';
+}
+function renderAccount(){
+  const km = (vita.km/1000).toFixed(1).replace('.', ',');
+  const ore = vita.secondi/3600;
+  const media = ore > 0.01 ? Math.round((vita.km/1000)/ore) : 0;
+  $('#accountPage').innerHTML =
+    '<h1>Area personale</h1>'
+    + '<p class="sub">Casa, servizi del Comune e le statistiche di tutti i tuoi viaggi. Restano salvate su questo telefono.</p>'
+    + '<div class="h2">Casa</div>'
+    + bloccoCasa()
+    + '<div class="h2" style="margin-top:22px">Statistiche di sempre</div>'
+    + '<div class="stats">'
+      + '<div class="stat"><b>' + km + '</b><span>km totali</span></div>'
+      + '<div class="stat"><b>' + vita.viaggi + '</b><span>viaggi</span></div>'
+      + '<div class="stat"><b>' + vita.parcheggi + '</b><span>parcheggi trovati</span></div>'
+      + '<div class="stat"><b>' + fmtDurata(vita.secondi*1000) + '</b><span>tempo in auto</span></div>'
+      + '<div class="stat"><b>' + media + '</b><span>km/h media</span></div>'
+      + '<div class="stat"><b>' + Math.round(vita.vMax) + '</b><span>km/h record</span></div>'
+    + '</div>';
+  const b1 = $('#btnCasaAttuale'); if(b1) b1.onclick = () => {
+    if(!ultimaPosizione){ alert('Prima avvia il rilevamento così ho la tua posizione, oppure usa "Scegli sulla mappa".'); return; }
+    casa = {lat: ultimaPosizione.lat, lon: ultimaPosizione.lon}; scrivi('parkCasa', casa); disegnaCasa(); renderAccount();
+  };
+  const b2 = $('#btnCasaMappa'); if(b2) b2.onclick = iniziaImpostaCasa;
+  const b3 = $('#btnCasaCambia'); if(b3) b3.onclick = iniziaImpostaCasa;
+  const b4 = $('#btnCasaVedi'); if(b4) b4.onclick = () => {
+    mostraScheda('mappa'); seguendo = false; updateLocateBtn();
+    if(casa){ map.setView([casa.lat, casa.lon], 17, {animate:true}); if(homeMarker) homeMarker.openPopup(); }
+  };
+}
+
 /* ============================ GPS ============================ */
 let lastAcc = null;
 let fixImprecisiDiFila = 0;
@@ -1176,6 +1405,7 @@ function onFix(p){
   $('#pillGps').className = 'pill ' + (acc <= ACCURATEZZA_MAX ? 'ok' : 'no');
 
   const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now(), acc: acc};
+  ultimaPosizione = punto;                    // memorizzo l'ultimo fix valido (per "casa qui")
   aggiornaMappa(punto, acc);
   if(acc > ACCURATEZZA_MAX){
     fixImprecisiDiFila++;
@@ -1217,8 +1447,10 @@ function onFix(p){
       if(viaggio){
         if(viaggio.ultimoPunto && d < 200 && vMedia > SOGLIA_FERMO){
           viaggio.distanza += d; viaggio.secondiInMoto += dt;
+          vita.km += d; vita.secondi += dt;               // accumulo anche nelle statistiche di sempre
         }
         if(vMedia > viaggio.vMax && vMedia < 250) viaggio.vMax = vMedia;
+        if(vMedia > vita.vMax && vMedia < 250) vita.vMax = vMedia;
         viaggio.ultimoPunto = punto;
         if(schedaAttiva === 'viaggio') aggiornaStatistiche();
       }
@@ -1228,7 +1460,7 @@ function onFix(p){
         if(stato !== 'in_auto'){ stato = 'in_auto'; dalQuando = ora; }
         if(confermato !== 'in_auto' && ora-dalQuando >= CONFERMA_MOTO_S*1000){
           confermato = 'in_auto'; puntoFermo = null; passi = []; rimuoviLinea();
-          if(!viaggio) resetViaggio();
+          if(!viaggio){ resetViaggio(); vita.viaggi++; salvaVita(); }   // nuovo viaggio iniziato
         }
       } else if(vMedia <= SOGLIA_FERMO){
         if(stato !== 'fermo'){ stato = 'fermo'; dalQuando = ora; puntoFermo = punto; }
@@ -1299,13 +1531,16 @@ function avvia(){
 }
 function ferma(){
   primoFixArrivato = false; fixImprecisiDiFila = 0;
+  salvaVita();
   if(watchId != null) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   if(motionOn) removeEventListener('devicemotion', onMotion);
   motionOn = false; passi = []; accBuf = []; sopraSoglia = false;
   headingCorrente = 0; applicaRotazione();
   setDot(false);
+  $('#accountPage').classList.add('hidden');
   $('#pannello').classList.add('hidden');
+  mostraScheda('mappa');
   $('#startWrap').classList.remove('hidden');
   $('#stato').textContent = 'Non sto ancora seguendo';
   $('#sotto').textContent = 'Tocca "Inizia a seguire" quando parti.';
@@ -1320,6 +1555,10 @@ $('#btnStart').onclick = () => {
 $('#btnStop').onclick = ferma;
 renderLog();
 updateCompassBtn();
+// la barra è visibile fin da subito, così puoi aprire Account e impostare casa
+// anche prima di avviare il rilevamento. Si parte in modalità Mappa (pulita).
+document.querySelector('.tabs').classList.add('on');
+mostraScheda('mappa');
 })();
 </script>
 </body>
