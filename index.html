@@ -818,10 +818,25 @@ const $ = s => document.querySelector(s);
    Tile CARTO Voyager: gratis, senza chiave API, stile chiaro con le
    strade leggibili (nessuna dipendenza da Google Maps).             */
 const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([41.9028, 12.4964], 5);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  subdomains:'abcd', maxZoom:20,
-  attribution:'&copy; OpenStreetMap &copy; CARTO'
-}).addTo(map);
+// Un solo fornitore di mappe può bloccare le richieste (succede, con politiche
+// di utilizzo severe). Ne provo uno, e se entro pochi tile fallisce passo
+// automaticamente al secondo, senza bisogno di nessuna chiave API.
+const tilesA = L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png', {
+  maxZoom:19, attribution:'&copy; OpenStreetMap contributors, Wikimedia'
+});
+const tilesB = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom:19, attribution:'Tiles &copy; Esri'
+});
+let erroriTile = 0, passatoAlSecondo = false;
+tilesA.on('tileerror', () => {
+  erroriTile++;
+  if(erroriTile >= 3 && !passatoAlSecondo){
+    passatoAlSecondo = true;
+    map.removeLayer(tilesA);
+    tilesB.addTo(map);
+  }
+});
+tilesA.addTo(map);
 
 const meIcon = L.divIcon({className:'', iconSize:[15,15], iconAnchor:[7,7],
   html:'<div style="position:relative;width:15px;height:15px"><div class="me-pulse"></div><div class="me-dot"></div></div>'});
@@ -887,10 +902,10 @@ const CONFERMA_MOTO_S  = rapido ? 2 : 8;     // quanto restare sopra soglia prim
 // (in coda o dopo un incidente puoi restare fermo per minuti senza aver affatto parcheggiato)
 const BACKSTOP_BASE_S   = rapido ? 6  : 75;
 const BACKSTOP_ESTESO_S = rapido ? 14 : 360;
-const DERIVA_MAX_M      = 15;     // oltre questa deriva "da fermo", è più probabile coda che avanza
-const CAMMINO_CONFERMA_M = 35;    // allontanamento a piedi dal punto di arresto che conferma subito
-const ACCURATEZZA_MAX  = 45;      // m: fix più imprecisi di così vengono scartati
-const FINESTRA         = 4;       // campioni su cui mediare la velocità
+const DERIVA_MAX_M      = 20;     // oltre questa deriva "da fermo", è più probabile coda che avanza
+const CAMMINO_CONFERMA_M = 40;    // allontanamento a piedi dal punto di arresto che conferma subito
+const ACCURATEZZA_MAX  = 30;      // m: fix più imprecisi di così vengono scartati del tutto
+const FINESTRA         = 5;       // campioni su cui mediare la velocità
 
 let watchId = null, samples = [], vHist = [];
 let stato = 'fermo';              // 'fermo' | 'in_auto'
@@ -938,7 +953,8 @@ function setPillMot(testo, ok){
 if(rapido){                                                   // solo per i test automatici
   window.__feedMotion = (m, t) => suPasso(m, t);
   window.__testMotionOn = () => { motionOn = true; setPillMot('attivo (test)', true); };
-  window.__debug = () => ({stato, confermato, dalQuando, puntoFermo, motionOn, ora: Date.now(), pins: pins.length});
+  window.__debug = () => ({stato, confermato, dalQuando, puntoFermo, motionOn, ora: Date.now(), pins: pins.length,
+    tileA: map.hasLayer(tilesA), tileB: map.hasLayer(tilesB), erroriTile});
   window.__testMotionOff = () => {                    // per simulare chi nega il permesso su iOS
     if(motionOn) removeEventListener('devicemotion', onMotion);
     motionOn = false; setPillMot('non concesso (test)', false);
@@ -1022,14 +1038,19 @@ function renderLog(){
 let lastAcc = null;
 function onFix(p){
   const acc = p.coords.accuracy;
-  lastAcc = acc;
+  lastAcc = acc; primoFixArrivato = true;
   $('#acc').textContent = `Precisione ${Math.round(acc)} m`;
   $('#pillGps').textContent = acc <= ACCURATEZZA_MAX ? 'buono' : 'debole';
   $('#pillGps').className = 'pill ' + (acc <= ACCURATEZZA_MAX ? 'ok' : 'no');
-  if(acc > ACCURATEZZA_MAX) return;                     // fix troppo impreciso: si scarta
 
-  const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now()};
+  const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now(), acc: acc};
+  // il pallino va mostrato sempre, anche con GPS impreciso: è meglio una
+  // posizione approssimativa (il cerchio intorno mostra quanto fidarsene)
+  // che uno schermo vuoto. La soglia stretta resta solo per il calcolo
+  // della velocità, dove il rumore causava le false partenze.
   aggiornaMappa(punto, acc);
+  if(acc > ACCURATEZZA_MAX) return;                     // troppo impreciso per fidarsi della velocità
+
   samples.push(punto);
   if(samples.length > 2) samples.shift();
 
@@ -1038,10 +1059,25 @@ function onFix(p){
     const dt = (b.t-a.t)/1000;
     if(dt > 0.3){
       const d = distanza(a,b);
-      let v = kmh(d, dt);
-      if(p.coords.speed != null && p.coords.speed >= 0) v = (v + p.coords.speed*3.6)/2; // se disponibile, media con quella del dispositivo
+      let v;
+      // La velocità del dispositivo, quando c'è, è la più affidabile: il chip GPS
+      // la ricava dall'effetto Doppler, non dai salti di posizione, quindi non
+      // gonfia quando sei fermo con segnale scarso. La preferiamo sempre.
+      if(p.coords.speed != null && p.coords.speed >= 0){
+        v = p.coords.speed * 3.6;
+      } else {
+        // Nessuna velocità dal dispositivo: la stimiamo dalla distanza, ma
+        // scontiamo parte dell'incertezza. Sottrarre tutta l'incertezza
+        // azzererebbe anche i movimenti veri; ne togliamo circa metà, quanto
+        // basta a smorzare il tremolio da fermo senza cancellare la guida.
+        const margine = 0.5 * (a.acc + b.acc);
+        const dNetto = Math.max(0, d - margine);
+        v = kmh(dNetto, dt);
+      }
       vHist.push(v); if(vHist.length > FINESTRA) vHist.shift();
-      const vMedia = vHist.reduce((s,x)=>s+x,0)/vHist.length;
+      // mediana invece della media: un singolo salto anomalo non trascina la stima
+      const ord = vHist.slice().sort((x,y)=>x-y);
+      const vMedia = ord[Math.floor(ord.length/2)];
 
       const ora = Date.now();
       if(vMedia >= SOGLIA_MOVIMENTO){
@@ -1075,8 +1111,26 @@ function onFix(p){
   }
 }
 
+let primoFixArrivato = false;
 function onErr(e){
-  $('#sotto').textContent = e.code === 1 ? 'Permesso posizione negato.' : 'Segnale GPS non disponibile.';
+  // code 1 = permesso negato (definitivo) · 2 = posizione irraggiungibile · 3 = timeout
+  if(e.code === 1){
+    $('#stato').textContent = 'Serve il permesso';
+    $('#sotto').textContent = 'Consenti la posizione nelle impostazioni del browser, poi riavvia.';
+    $('#pillGps').textContent = 'negato'; $('#pillGps').className = 'pill no';
+  } else if(e.code === 3){
+    // timeout: NON è un fallimento definitivo, watchPosition continua a provare da solo
+    if(!primoFixArrivato){
+      $('#sotto').textContent = 'Sto ancora cercando il segnale…';
+      $('#pillGps').textContent = 'in cerca'; $('#pillGps').className = 'pill no';
+    }
+  } else {
+    // posizione momentaneamente irraggiungibile (tipico su un PC senza GPS)
+    if(!primoFixArrivato){
+      $("#sotto").textContent = "Segnale assente. Su un computer fisso è normale: provala sul telefono, all'aperto.";
+      $('#pillGps').textContent = 'assente'; $('#pillGps').className = 'pill no';
+    }
+  }
 }
 
 function avvia(){
@@ -1098,10 +1152,11 @@ function avvia(){
   }
   attivaMovimento();
   watchId = navigator.geolocation.watchPosition(onFix, onErr, {
-    enableHighAccuracy: true, maximumAge: 0, timeout: 15000
+    enableHighAccuracy: true, maximumAge: 2000, timeout: 30000
   });
 }
 function ferma(){
+  primoFixArrivato = false;
   if(watchId != null) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   if(motionOn) removeEventListener('devicemotion', onMotion);
