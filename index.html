@@ -1014,6 +1014,20 @@ function setDot(on){ $('#dot').classList.toggle('on', on); }
 function aggiornaUI(vMedia){
   const ico = $('#ico'), h1 = $('#stato'), sub = $('#sotto'), vel = $('#velocita');
   const inMovimentoOra = confermato === 'in_auto' && stato === 'in_auto';
+  const segnaleDebole = fixImprecisiDiFila >= SEGNALE_DEBOLE_DOPO;
+
+  // il segnale scarso ha priorità sul resto solo quando NON stiamo già seguendo
+  // un movimento in corso: se sei chiaramente in auto, non serve allarmare.
+  if(segnaleDebole && !inMovimentoOra){
+    ico.textContent = '📡';
+    h1.textContent = 'Segnale GPS debole';
+    sub.textContent = motionOn && staCamminando()
+      ? 'Ti stai muovendo a piedi, ma la posizione è imprecisa qui.'
+      : 'Qui il GPS è coperto (galleria, treno, al chiuso): non riesco a capire se ti muovi.';
+    vel.textContent = 'in attesa di un segnale migliore · precisione ' + Math.round(lastAcc||0) + ' m';
+    return;
+  }
+
   ico.textContent = confermato === 'in_auto' ? '🚗' : '🅿️';
   if(stato === 'in_auto' && confermato === 'fermo'){        // appena ripartito, in attesa di conferma
     h1.textContent = 'Forse sei ripartito…';
@@ -1074,6 +1088,8 @@ function renderLog(){
 }
 
 let lastAcc = null;
+let fixImprecisiDiFila = 0;                // quanti fix consecutivi sono troppo deboli per fidarsi
+const SEGNALE_DEBOLE_DOPO = 2;             // dopo N fix deboli di fila, avvisiamo che il segnale è scarso
 function onFix(p){
   const acc = p.coords.accuracy;
   lastAcc = acc; primoFixArrivato = true;
@@ -1087,7 +1103,15 @@ function onFix(p){
   // che uno schermo vuoto. La soglia stretta resta solo per il calcolo
   // della velocità, dove il rumore causava le false partenze.
   aggiornaMappa(punto, acc);
-  if(acc > ACCURATEZZA_MAX) return;                     // troppo impreciso per fidarsi della velocità
+  if(acc > ACCURATEZZA_MAX){
+    // segnale troppo debole per fidarsi: non calcoliamo la velocità, e se
+    // capita di continuo (galleria, treno, chiuso) lo diciamo apertamente
+    // invece di mostrare un "sei fermo" che non è vero.
+    fixImprecisiDiFila++;
+    if(fixImprecisiDiFila >= SEGNALE_DEBOLE_DOPO) aggiornaUI(null);
+    return;
+  }
+  fixImprecisiDiFila = 0;                             // segnale tornato buono
 
   samples.push(punto);
   if(samples.length > 2) samples.shift();
@@ -1194,7 +1218,7 @@ function avvia(){
   });
 }
 function ferma(){
-  primoFixArrivato = false;
+  primoFixArrivato = false; fixImprecisiDiFila = 0;
   if(watchId != null) navigator.geolocation.clearWatch(watchId);
   watchId = null;
   if(motionOn) removeEventListener('devicemotion', onMotion);
