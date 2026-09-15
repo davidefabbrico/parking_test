@@ -828,14 +828,17 @@ const $ = s => document.querySelector(s);
    Tile CARTO Voyager: gratis, senza chiave API, stile chiaro con le
    strade leggibili (nessuna dipendenza da Google Maps).             */
 const map = L.map('map', {zoomControl:false, attributionControl:true}).setView([41.9028, 12.4964], 5);
-// Un solo fornitore di mappe può bloccare le richieste (succede, con politiche
-// di utilizzo severe). Ne provo uno, e se entro pochi tile fallisce passo
-// automaticamente al secondo, senza bisogno di nessuna chiave API.
-const tilesA = L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png', {
-  maxZoom:19, attribution:'&copy; OpenStreetMap contributors, Wikimedia'
+// Un solo fornitore di mappe può bloccare le richieste (è già successo con
+// alcuni). Provo lo stile chiaro "tipo Apple Maps"; se fallisce, passo a una
+// riserva di un fornitore diverso, così non resti mai senza mappa.
+// Primo: CARTO Positron — sfondo crema, strade bianche, verde e acqua tenui.
+const tilesA = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
+  subdomains:'abcd', maxZoom:20, attribution:'&copy; OpenStreetMap, &copy; CARTO'
 });
-const tilesB = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom:19, attribution:'Tiles &copy; Esri'
+// Riserva: Esri "Light Gray", di un fornitore diverso ma dallo stile altrettanto
+// chiaro e sobrio, così anche il ripiego resta coerente con Apple Maps.
+const tilesB = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom:16, attribution:'Tiles &copy; Esri'
 });
 let erroriTile = 0, passatoAlSecondo = false;
 tilesA.on('tileerror', () => {
