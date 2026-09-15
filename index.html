@@ -682,9 +682,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
 html,body{margin:0;height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,Inter,system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;letter-spacing:-0.011em}
-.wrap{height:100dvh;display:flex;flex-direction:column}
+.wrap{height:100dvh;position:relative;overflow:hidden}
 
-.mapstage{flex:1;position:relative;min-height:0;background:var(--bg)}
+.mapstage{position:absolute;inset:0;background:var(--bg)}
 #map{position:absolute;inset:0}
 .leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.75)!important}
 
@@ -720,9 +720,16 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
 .pop b{display:block;font-size:13px;margin-bottom:2px}
 .pop a{color:var(--blue);font-size:12.5px;font-weight:500;text-decoration:none}
 
-.sheet{background:var(--bg);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
-  padding:8px 16px calc(14px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;-webkit-overflow-scrolling:touch}
-.sheet::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#D6D4CC;margin:2px auto 12px}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:410;
+  background:var(--bg);border-radius:20px 20px 0 0;box-shadow:0 -1px 0 var(--hair),0 -10px 28px rgba(0,0,0,.06);
+  padding:8px 16px calc(14px + env(safe-area-inset-bottom));max-height:46dvh;overflow:auto;-webkit-overflow-scrolling:touch;
+  transition:transform .32s cubic-bezier(.32,.72,0,1);will-change:transform}
+/* pannello ritratto: resta visibile solo la maniglia in cima, il resto scivola fuori schermo */
+.sheet.collapsed{transform:translateY(calc(100% - 30px))}
+.grip{position:sticky;top:0;z-index:2;margin:-8px -16px 4px;padding:10px 16px 6px;background:var(--bg);
+  border-radius:20px 20px 0 0;cursor:pointer;display:flex;justify-content:center}
+.grip::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#D6D4CC;transition:background .2s}
+.grip:active::before{background:#B8B5AC}
 .card2{background:var(--surface);border-radius:16px;padding:4px 0;box-shadow:0 1px 2px rgba(0,0,0,.05);margin-bottom:10px}
 .row{display:flex;align-items:center;gap:12px;padding:12px 15px;font-size:14px}
 .row+.row{border-top:1px solid var(--hair)}
@@ -782,6 +789,7 @@ body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSys
   </div>
 
   <div id="pannello" class="sheet hidden">
+    <div class="grip" id="grip" aria-label="Mostra o nascondi il pannello"></div>
     <div class="card2">
       <div class="row"><span class="g"><span class="k">GPS</span><span class="s" id="acc">—</span></span>
         <span class="pill" id="pillGps">—</span></div>
@@ -851,10 +859,38 @@ function updateLocateBtn(){ $('#locate').classList.toggle('on', seguendo); }
 map.on('dragstart', () => { seguendo = false; updateLocateBtn(); });
 $('#locate').onclick = () => {
   seguendo = true; updateLocateBtn();
+  collapsePanel(true);                       // ritira il pannello così il puntino resta visibile
   if(meMarker) map.setView(meMarker.getLatLng(), Math.max(map.getZoom(), 17), {animate:true});
 };
 $('#zIn').onclick = () => map.zoomIn();
 $('#zOut').onclick = () => map.zoomOut();
+
+/* --- pannello inferiore ritraibile ---------------------------------------
+   Scorrere in basso lo chiude, scorrere in alto lo riapre. La maniglia fa
+   da interruttore. Si chiude anche quando torni alla tua posizione, così il
+   puntino blu non finisce nascosto sotto il pannello.                    */
+const pannello = () => $('#pannello');
+function collapsePanel(on){
+  const el = pannello();
+  if(!el) return;
+  el.classList.toggle('collapsed', on);
+  if(!on) el.scrollTop = 0;
+}
+(function abilitaGesti(){
+  const el = pannello();
+  let y0 = null, top0 = 0;
+  const grip = $('#grip');
+  if(grip) grip.onclick = () => collapsePanel(!el.classList.contains('collapsed'));
+  // trascinamento verticale sul pannello: se sei già in cima e tiri giù, lo chiudi
+  el.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; top0 = el.scrollTop; }, {passive:true});
+  el.addEventListener('touchmove', e => {
+    if(y0 === null) return;
+    const dy = e.touches[0].clientY - y0;
+    if(top0 <= 0 && dy > 44){ collapsePanel(true); y0 = null; }        // tiro giù dall'alto → chiudi
+    else if(el.classList.contains('collapsed') && dy < -30){ collapsePanel(false); y0 = null; }  // tiro su → apri
+  }, {passive:true});
+  el.addEventListener('touchend', () => { y0 = null; }, {passive:true});
+})();
 
 function aggiornaMappa(p, acc){
   const ll = [p.lat, p.lon];
