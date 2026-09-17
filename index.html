@@ -688,7 +688,9 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .mapstage{position:absolute;inset:0;background:var(--bg);overflow:hidden}
 /* la mappa ruota davvero (leaflet-rotate), niente più trucchi CSS */
 #map{position:absolute;inset:0}
-.leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.75)!important}
+.leaflet-control-attribution{font-size:8.5px;background:rgba(255,255,255,.55)!important;color:var(--ink-3)!important;
+  padding:1px 5px!important;border-radius:6px 0 0 0!important;opacity:.6}
+.leaflet-control-attribution a{color:var(--ink-3)!important;text-decoration:none}
 
 .float{position:absolute;background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(20px);
   -webkit-backdrop-filter:saturate(180%) blur(20px);border-radius:16px;
@@ -840,9 +842,28 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .setHomeBar .no{background:var(--surface);color:var(--ink-2);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 
 .hidden{display:none}
+
+/* splashscreen d'avvio, minimale */
+.splash{position:fixed;inset:0;z-index:2000;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;transition:opacity .45s ease}
+.splash.via{opacity:0;pointer-events:none}
+.splash .mark{width:76px;height:76px;border-radius:22px;background:var(--blue);display:grid;place-items:center;
+  box-shadow:0 10px 30px rgba(0,113,227,.3)}
+.splash .mark span{font-size:40px;line-height:1}
+.splash h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-0.03em}
+.splash p{margin:0;font-size:14px;color:var(--ink-2)}
+.splash .load{width:26px;height:26px;border-radius:50%;border:2.5px solid var(--hair);border-top-color:var(--blue);
+  animation:spin .8s linear infinite;margin-top:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
+<div class="splash" id="splash">
+  <div class="mark"><span>🅿️</span></div>
+  <h1>Hai parcheggiato qui</h1>
+  <p>Ti ricordo dove hai lasciato l'auto</p>
+  <div class="load"></div>
+</div>
 <div class="wrap">
   <div class="mapstage">
     <div id="map"></div>
@@ -2879,10 +2900,16 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 (() => {
 "use strict";
 const $ = s => document.querySelector(s);
+// rete di sicurezza: qualunque cosa accada, la splash sparisce entro 4 s
+// (così un eventuale errore non lascia lo schermo bloccato sulla splash)
+setTimeout(() => { const s = document.getElementById('splash'); if(s){ s.classList.add('via'); setTimeout(() => s && s.remove(), 500); } }, 4000);
 
 /* ============================ MAPPA ============================ */
-const map = L.map('map', {zoomControl:false, attributionControl:true,
+const map = L.map('map', {zoomControl:false, attributionControl:false,
   rotate:true, touchRotate:true, rotateControl:false, bearing:0}).setView([41.9028, 12.4964], 5);
+// attribuzione minima e discreta: obbligatoria per licenza (OSM/CARTO/Esri),
+// ma senza il logo Leaflet (la bandiera) e resa piccolissima in un angolo
+L.control.attribution({prefix:false, position:'bottomright'}).addTo(map);
 const tilesA = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png', {
   subdomains:'abcd', maxZoom:20, attribution:'&copy; OpenStreetMap, &copy; CARTO'
 });
@@ -3051,7 +3078,9 @@ const hhmm = h => String(Math.floor(h)).padStart(2,'0') + ':00';
 function leggi(chiave, base){ try{ const v = localStorage.getItem(chiave); return v ? JSON.parse(v) : base; }catch(e){ return base; } }
 function scrivi(chiave, val){ try{ localStorage.setItem(chiave, JSON.stringify(val)); }catch(e){} }
 let casa = leggi('parkCasa', null);          // {lat, lon}
+if(casa && (typeof casa.lat !== 'number' || typeof casa.lon !== 'number' || !isFinite(casa.lat) || !isFinite(casa.lon))) casa = null;
 let vita = leggi('parkVita', {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0});
+if(!vita || typeof vita !== 'object') vita = {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0};
 function salvaVita(){ scrivi('parkVita', vita); }
 
 let homeMarker = null;
@@ -3458,6 +3487,12 @@ function bloccoCasa(){
     + '<button class="btn ghost" id="btnCasaCambia">Cambia posizione di casa</button>';
 }
 function renderAccount(){
+ try{
+  // difese: se la memoria è corrotta o incompleta (capita su mobile in
+  // navigazione privata), riparto da valori validi invece di andare in errore
+  if(!vita || typeof vita !== 'object') vita = {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0};
+  vita.km = +vita.km || 0; vita.viaggi = +vita.viaggi || 0; vita.parcheggi = +vita.parcheggi || 0;
+  vita.secondi = +vita.secondi || 0; vita.vMax = +vita.vMax || 0;
   const km = (vita.km/1000).toFixed(1).replace('.', ',');
   const ore = vita.secondi/3600;
   const media = ore > 0.01 ? Math.round((vita.km/1000)/ore) : 0;
@@ -3485,6 +3520,20 @@ function renderAccount(){
     mostraScheda('mappa'); seguendo = false; updateLocateBtn();
     if(casa){ map.setView([casa.lat, casa.lon], 17, {animate:true}); if(homeMarker) homeMarker.openPopup(); }
   };
+ } catch(err){
+  // niente più pagina bianca: mostro l'errore e un modo per ripulire la memoria
+  $('#accountPage').innerHTML =
+    '<h1>Area personale</h1>'
+    + '<p class="sub">Si è verificato un problema nel mostrare questa pagina.</p>'
+    + '<div class="card2"><div class="irow"><span class="iico" style="background:var(--red)">!</span>'
+    + '<span class="g"><span class="k">' + esc(err.message || 'Errore') + '</span>'
+    + '<span class="s">Prova a ripulire i dati salvati su questo telefono e riavvia.</span></span></div></div>'
+    + '<button class="btn" id="btnReset">Ripulisci i dati e ricarica</button>';
+  const r = $('#btnReset'); if(r) r.onclick = () => {
+    try{ localStorage.removeItem('parkCasa'); localStorage.removeItem('parkVita'); }catch(e){}
+    location.reload();
+  };
+ }
 }
 
 /* ============================ GPS ============================ */
@@ -3657,6 +3706,8 @@ updateCompassBtn();
 // anche prima di avviare il rilevamento. Si parte in modalità Mappa (pulita).
 document.querySelector('.tabs').classList.add('on');
 mostraScheda('mappa');
+// tolgo la splash appena tutto è pronto (con un minimo di 700 ms perché si veda)
+setTimeout(() => { const s = document.getElementById('splash'); if(s){ s.classList.add('via'); setTimeout(() => s.remove(), 500); } }, 700);
 })();
 </script>
 </body>
