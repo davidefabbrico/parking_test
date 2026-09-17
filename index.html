@@ -742,8 +742,8 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
   backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   padding:6px 8px calc(6px + env(safe-area-inset-bottom))}
 .tabs button{flex:1;border:0;background:none;cursor:pointer;padding:5px 0 3px;
-  display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-3);font:inherit;font-size:10.5px;font-weight:500}
-.tabs button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink-3);font:inherit;font-size:10px;font-weight:500}
+.tabs button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .tabs button.on{color:var(--blue)}
 .tabs button:active{opacity:.6}
 .tabs.on{display:flex}
@@ -777,6 +777,9 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .stat b{display:block;font-size:23px;font-weight:700;letter-spacing:-0.02em;font-variant-numeric:tabular-nums}
 .stat span{font-size:12px;color:var(--ink-2)}
 .h2{font-size:12.5px;font-weight:600;color:var(--ink-3);margin:4px 2px 8px;text-transform:uppercase;letter-spacing:.03em}
+.lbl{display:block;font-size:12px;color:var(--ink-2);margin:0 0 5px;font-weight:500}
+.inp{width:100%;border:0;background:#EDEDF0;border-radius:12px;padding:12px 13px;font:inherit;font-size:15px;color:var(--ink);outline:none}
+.inp:focus{box-shadow:0 0 0 2px var(--blue) inset}
 
 .btn{display:block;width:100%;border:0;border-radius:999px;padding:14px;font:inherit;font-size:16px;
   font-weight:600;cursor:pointer;background:var(--ink);color:#fff}
@@ -934,12 +937,14 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
     </div>
   </div>
 
+  <div class="accountPage hidden" id="casaPage"></div>
   <div class="accountPage hidden" id="accountPage"></div>
 
   <nav class="tabs">
     <button id="navMappa" aria-label="Mappa"><svg viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5L9 17.5l6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Mappa</button>
     <button id="navStato" class="on" aria-label="Stato"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4l2.5 2.5"/></svg>Stato</button>
     <button id="navViaggio" aria-label="Viaggio"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 15l5-4 4 3 7-6"/></svg>Viaggio</button>
+    <button id="navCasa" aria-label="Casa"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>Casa</button>
     <button id="navAccount" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>Account</button>
   </nav>
 </div>
@@ -3170,33 +3175,31 @@ if('geolocation' in navigator){
 let schedaAttiva = 'stato';
 function mostraScheda(nome){
   schedaAttiva = nome;
-  const sheet = $('#pannello'), acc = $('#accountPage');
+  const sheet = $('#pannello'), acc = $('#accountPage'), casaP = $('#casaPage');
+  acc.classList.add('hidden'); casaP.classList.add('hidden');
   if(nome === 'account'){
-    acc.classList.remove('hidden');
+    acc.classList.remove('hidden'); sheet.classList.add('collapsed'); renderAccount();
+  } else if(nome === 'casa'){
+    casaP.classList.remove('hidden'); sheet.classList.add('collapsed'); renderCasa();
+  } else if(nome === 'mappa'){
     sheet.classList.add('collapsed');
-    renderAccount();
   } else {
-    acc.classList.add('hidden');
-    if(nome === 'mappa'){
-      sheet.classList.add('collapsed');
-    } else {
-      sheet.classList.remove('collapsed');
-      $('#tabStato').classList.toggle('hidden', nome !== 'stato');
-      $('#tabViaggio').classList.toggle('hidden', nome !== 'viaggio');
-      $('#sheetBody').scrollTop = 0;
-      if(nome === 'viaggio') aggiornaStatistiche();
-    }
+    sheet.classList.remove('collapsed');
+    $('#tabStato').classList.toggle('hidden', nome !== 'stato');
+    $('#tabViaggio').classList.toggle('hidden', nome !== 'viaggio');
+    $('#sheetBody').scrollTop = 0;
+    if(nome === 'viaggio') aggiornaStatistiche();
   }
-  const map4 = [['mappa','#navMappa'],['stato','#navStato'],['viaggio','#navViaggio'],['account','#navAccount']];
-  for(const [n,id] of map4) $(id).classList.toggle('on', nome === n);
-  // il contatore parcheggi si vede solo quando la mappa è in primo piano e ci sono risultati
+  const map5 = [['mappa','#navMappa'],['stato','#navStato'],['viaggio','#navViaggio'],['casa','#navCasa'],['account','#navAccount']];
+  for(const [n,id] of map5) $(id).classList.toggle('on', nome === n);
   const badge = $('#pkBadge');
-  if(pkMarkers.length && nome !== 'account') badge.classList.remove('hidden');
+  if(pkMarkers.length && nome === 'mappa') badge.classList.remove('hidden');
   else badge.classList.add('hidden');
 }
 $('#navMappa').onclick = () => mostraScheda('mappa');
 $('#navStato').onclick = () => mostraScheda('stato');
 $('#navViaggio').onclick = () => mostraScheda('viaggio');
+$('#navCasa').onclick = () => mostraScheda('casa');
 $('#navAccount').onclick = () => mostraScheda('account');
 
 /* ============================ IMPOSTA CASA ============================ */
@@ -3212,13 +3215,20 @@ function iniziaImpostaCasa(){
 function fineImpostaCasa(){ $('#crosshair').classList.remove('on'); $('#setHomeBar').classList.remove('on');
   $('#cercaVia').value = ''; $('#cercaRes').innerHTML = ''; }
 $('#setHomeCancel').onclick = fineImpostaCasa;
+let viaScelta = null;    // nome via scelto dalla ricerca, per etichettare casa
 $('#setHomeOk').onclick = () => {
   const c = map.getCenter();
-  casa = {lat: c.lat, lon: c.lng};
+  const lat = c && (typeof c.lat === 'number' ? c.lat : c.lat), lon = c && (c.lng != null ? c.lng : c.lon);
+  if(lat == null || lon == null || !isFinite(lat) || !isFinite(lon)){
+    alert('Non riesco a leggere la posizione. Riprova a spostare la mappa.'); return;
+  }
+  casa = {lat: +lat, lon: +lon};
+  if(viaScelta) casa.via = viaScelta;
   scrivi('parkCasa', casa);
   disegnaCasa();
   fineImpostaCasa();
-  mostraScheda('account');
+  viaScelta = null;
+  mostraScheda('casa');
 };
 
 /* --- ricerca indirizzo (Nominatim, OpenStreetMap: gratis, senza chiave) --- */
@@ -3234,11 +3244,14 @@ function cercaIndirizzo(q){
       if(!lista.length){ res.innerHTML = '<div class="muted">Nessun risultato. Prova a sistemare la mappa a mano.</div>'; return; }
       res.innerHTML = '';
       lista.forEach(item => {
+        const la = parseFloat(item.lat), lo = parseFloat(item.lon);
+        if(!isFinite(la) || !isFinite(lo)) return;
         const btn = document.createElement('button');
         btn.textContent = item.display_name;
         btn.onclick = () => {
-          map.setView([parseFloat(item.lat), parseFloat(item.lon)], 17, {animate:true});
-          res.innerHTML = ''; $('#cercaVia').value = '';
+          viaScelta = item.display_name;
+          map.setView([la, lo], 17, {animate:false});   // niente animazione: evita stati intermedi
+          res.innerHTML = ''; $('#cercaVia').value = item.display_name.split(',')[0];
           $('#cercaVia').blur();
         };
         res.appendChild(btn);
@@ -3453,27 +3466,38 @@ function aggiornaStatistiche(){
   $('#stMax').textContent = Math.round(viaggio.vMax);
 }
 
-/* ============================ PAGINA ACCOUNT ============================ */
-function iconaRifiuti(k){ const r = RIFIUTI[k]; return '<span class="iico" style="background:' + r.col + '">' + r.emoji + '</span>'; }
-function bloccoCasa(){
+/* ============================ PAGINA CASA ============================ */
+function iconaRifiuti(k){ const r = RIFIUTI[k] || RIFIUTI.nessuno; return '<span class="iico" style="background:' + r.col + '">' + r.emoji + '</span>'; }
+function renderCasa(){
+ try{
+  const host = $('#casaPage');
   if(!casa){
-    return '<div class="card2"><div class="irow"><span class="iico" style="background:var(--green)">🏠</span>'
-      + '<span class="g"><span class="k">Imposta la posizione di casa</span>'
-      + '<span class="s">Ti mostro qui i giorni della raccolta rifiuti, la pulizia strade e i cantieri della tua zona.</span></span></div></div>'
+    host.innerHTML =
+      '<h1>Casa</h1>'
+      + '<p class="sub">Imposta dove abiti: ti mostro qui la raccolta rifiuti, la pulizia strade e i cantieri della tua zona. Sono dati del Comune, funzionano dal primo giorno.</p>'
+      + '<div class="card2"><div class="irow"><span class="iico" style="background:var(--green)">🏠</span>'
+      + '<span class="g"><span class="k">Nessuna casa impostata</span>'
+      + '<span class="s">Scegli la posizione per attivare i servizi.</span></span></div></div>'
       + '<button class="btn" id="btnCasaAttuale">Usa la posizione attuale</button>'
-      + '<button class="btn ghost" id="btnCasaMappa">Scegli sulla mappa</button>';
+      + '<button class="btn ghost" id="btnCasaMappa">Cerca l\'indirizzo o scegli sulla mappa</button>';
+    aggancioCasaBtn();
+    return;
   }
   const dc = datiComune(casa.lat, casa.lon);
   const g = giornoOggi();
-  const oggi = RIFIUTI[dc.cal[g]], domani = RIFIUTI[dc.cal[(g+1)%7]];
+  const oggiK = dc.cal[g], domaniK = dc.cal[(g+1)%7];
+  const oggi = RIFIUTI[oggiK] || RIFIUTI.nessuno, domani = RIFIUTI[domaniK] || RIFIUTI.nessuno;
   const ore = oreAllaPulizia(dc);
-  const week = dc.cal.map((k,i) => '<div class="' + (i===g?'now':'') + '"><i style="background:' + RIFIUTI[k].col + '"></i>' + GG[i] + '</div>').join('');
+  const week = dc.cal.map((k,i) => '<div class="' + (i===g?'now':'') + '"><i style="background:' + (RIFIUTI[k]||RIFIUTI.nessuno).col + '"></i>' + GG[i] + '</div>').join('');
   const quando = ore < 1 ? 'in corso ora' : ore < 24 ? 'tra ' + Math.round(ore) + ' ore' : 'tra ' + Math.round(ore/24) + ' giorni';
-  return '<div class="card2">'
+  host.innerHTML =
+    '<h1>Casa</h1>'
+    + '<p class="sub">I servizi del Comune per la tua zona.</p>'
+    + '<div class="card2">'
     + '<div class="irow"><span class="iico" style="background:var(--green)">🏠</span>'
-      + '<span class="g"><span class="k">Casa · zona ' + dc.zona + '</span><span class="s">Dati del Comune per la tua zona</span></span></div>'
-    + '<div class="irow">' + iconaRifiuti(dc.cal[g])
-      + '<span class="g"><span class="k">' + (dc.cal[g]==='nessuno' ? 'Stasera nessun ritiro' : 'Stasera esci: ' + esc(oggi.nome)) + '</span>'
+      + '<span class="g"><span class="k">Casa · zona ' + dc.zona + '</span><span class="s">' + (casa.via ? esc(casa.via) : 'Posizione salvata') + '</span></span></div>'
+    + '<div class="irow">' + iconaRifiuti(oggiK)
+      + '<span class="g"><span class="k">' + (oggiK==='nessuno' ? 'Stasera nessun ritiro' : 'Stasera esci: ' + esc(oggi.nome)) + '</span>'
       + '<span class="s">Domani: ' + esc(domani.nome.toLowerCase()) + ' · esposizione 20:00–24:00</span></span></div>'
     + '<div class="week">' + week + '</div>'
     + '<div class="irow"><span class="iico" style="background:' + (ore<12?'var(--red)':'#2A7DE1') + '">🧹</span>'
@@ -3484,35 +3508,20 @@ function bloccoCasa(){
       + '<span class="s">' + (dc.lavori ? 'Fino al ' + dc.lavori.fino : 'Nessun lavoro segnalato nella tua via') + '</span></span></div>'
     + '</div>'
     + '<button class="btn ghost" id="btnCasaVedi">Vedi casa sulla mappa</button>'
-    + '<button class="btn ghost" id="btnCasaCambia">Cambia posizione di casa</button>';
+    + '<button class="btn ghost" id="btnCasaCambia">Modifica indirizzo di casa</button>';
+  aggancioCasaBtn();
+ } catch(err){
+  $('#casaPage').innerHTML = '<h1>Casa</h1><p class="sub">Si è verificato un problema.</p>'
+    + '<div class="card2"><div class="irow"><span class="iico" style="background:var(--red)">!</span>'
+    + '<span class="g"><span class="k">' + esc(err.message||'Errore') + '</span></span></div></div>'
+    + '<button class="btn" id="btnCasaReset">Reimposta la casa</button>';
+  const r = $('#btnCasaReset'); if(r) r.onclick = () => { casa = null; try{ localStorage.removeItem('parkCasa'); }catch(e){} renderCasa(); };
+ }
 }
-function renderAccount(){
- try{
-  // difese: se la memoria è corrotta o incompleta (capita su mobile in
-  // navigazione privata), riparto da valori validi invece di andare in errore
-  if(!vita || typeof vita !== 'object') vita = {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0};
-  vita.km = +vita.km || 0; vita.viaggi = +vita.viaggi || 0; vita.parcheggi = +vita.parcheggi || 0;
-  vita.secondi = +vita.secondi || 0; vita.vMax = +vita.vMax || 0;
-  const km = (vita.km/1000).toFixed(1).replace('.', ',');
-  const ore = vita.secondi/3600;
-  const media = ore > 0.01 ? Math.round((vita.km/1000)/ore) : 0;
-  $('#accountPage').innerHTML =
-    '<h1>Area personale</h1>'
-    + '<p class="sub">Casa, servizi del Comune e le statistiche di tutti i tuoi viaggi. Restano salvate su questo telefono.</p>'
-    + '<div class="h2">Casa</div>'
-    + bloccoCasa()
-    + '<div class="h2" style="margin-top:22px">Statistiche di sempre</div>'
-    + '<div class="stats">'
-      + '<div class="stat"><b>' + km + '</b><span>km totali</span></div>'
-      + '<div class="stat"><b>' + vita.viaggi + '</b><span>viaggi</span></div>'
-      + '<div class="stat"><b>' + vita.parcheggi + '</b><span>parcheggi trovati</span></div>'
-      + '<div class="stat"><b>' + fmtDurata(vita.secondi*1000) + '</b><span>tempo in auto</span></div>'
-      + '<div class="stat"><b>' + media + '</b><span>km/h media</span></div>'
-      + '<div class="stat"><b>' + Math.round(vita.vMax) + '</b><span>km/h record</span></div>'
-    + '</div>';
+function aggancioCasaBtn(){
   const b1 = $('#btnCasaAttuale'); if(b1) b1.onclick = () => {
-    if(!ultimaPosizione){ alert('Prima avvia il rilevamento così ho la tua posizione, oppure usa "Scegli sulla mappa".'); return; }
-    casa = {lat: ultimaPosizione.lat, lon: ultimaPosizione.lon}; scrivi('parkCasa', casa); disegnaCasa(); renderAccount();
+    if(!ultimaPosizione){ alert('Prima avvia il rilevamento così ho la tua posizione, oppure cerca l\'indirizzo.'); return; }
+    casa = {lat: ultimaPosizione.lat, lon: ultimaPosizione.lon}; scrivi('parkCasa', casa); disegnaCasa(); renderCasa();
   };
   const b2 = $('#btnCasaMappa'); if(b2) b2.onclick = iniziaImpostaCasa;
   const b3 = $('#btnCasaCambia'); if(b3) b3.onclick = iniziaImpostaCasa;
@@ -3520,17 +3529,70 @@ function renderAccount(){
     mostraScheda('mappa'); seguendo = false; updateLocateBtn();
     if(casa){ map.setView([casa.lat, casa.lon], 17, {animate:true}); if(homeMarker) homeMarker.openPopup(); }
   };
+}
+
+/* ============================ PAGINA ACCOUNT (profilo locale) ============================ */
+let profilo = leggi('parkProfilo', null);
+if(profilo && typeof profilo !== 'object') profilo = null;
+function renderAccount(){
+ try{
+  if(!vita || typeof vita !== 'object') vita = {km:0, viaggi:0, parcheggi:0, secondi:0, vMax:0};
+  vita.km = +vita.km || 0; vita.viaggi = +vita.viaggi || 0; vita.parcheggi = +vita.parcheggi || 0;
+  vita.secondi = +vita.secondi || 0; vita.vMax = +vita.vMax || 0;
+  const host = $('#accountPage');
+  if(!profilo){
+    // "login" locale: nessun server, solo un profilo salvato su questo telefono
+    host.innerHTML =
+      '<h1>Area personale</h1>'
+      + '<p class="sub">Crea il tuo profilo per personalizzare l\'app. Resta su questo telefono.</p>'
+      + '<div class="card2" style="padding:14px 15px">'
+      + '<label class="lbl">Come ti chiami</label>'
+      + '<input class="inp" id="inNome" placeholder="Il tuo nome" autocomplete="name">'
+      + '<label class="lbl" style="margin-top:12px">Email (facoltativa)</label>'
+      + '<input class="inp" id="inMail" placeholder="nome@esempio.it" inputmode="email" autocomplete="email">'
+      + '</div>'
+      + '<button class="btn" id="btnEntra">Crea profilo</button>'
+      + '<p class="note">Non è un account online: non serve password e i dati non lasciano il telefono. Un accesso vero, con sincronizzazione fra dispositivi, richiederebbe un server.</p>';
+    const be = $('#btnEntra'); if(be) be.onclick = () => {
+      const nome = ($('#inNome').value || '').trim();
+      if(!nome){ alert('Scrivi almeno il tuo nome.'); return; }
+      profilo = {nome, mail: ($('#inMail').value||'').trim(), dal: Date.now()};
+      scrivi('parkProfilo', profilo); renderAccount();
+    };
+    return;
+  }
+  const km = (vita.km/1000).toFixed(1).replace('.', ',');
+  const ore = vita.secondi/3600;
+  const media = ore > 0.01 ? Math.round((vita.km/1000)/ore) : 0;
+  const iniziale = profilo.nome.charAt(0).toUpperCase();
+  host.innerHTML =
+    '<h1>Ciao, ' + esc(profilo.nome) + '</h1>'
+    + '<p class="sub">La tua area personale. ' + (profilo.mail ? esc(profilo.mail) + ' · ' : '') + 'membro dal ' + new Date(profilo.dal).toLocaleDateString('it-IT') + '.</p>'
+    + '<div class="h2">Statistiche di sempre</div>'
+    + '<div class="stats">'
+      + '<div class="stat"><b>' + km + '</b><span>km totali</span></div>'
+      + '<div class="stat"><b>' + vita.viaggi + '</b><span>viaggi</span></div>'
+      + '<div class="stat"><b>' + vita.parcheggi + '</b><span>parcheggi trovati</span></div>'
+      + '<div class="stat"><b>' + fmtDurata(vita.secondi*1000) + '</b><span>tempo in auto</span></div>'
+      + '<div class="stat"><b>' + media + '</b><span>km/h media</span></div>'
+      + '<div class="stat"><b>' + Math.round(vita.vMax) + '</b><span>km/h record</span></div>'
+    + '</div>'
+    + '<div class="h2" style="margin-top:22px">Il tuo profilo</div>'
+    + '<button class="btn ghost" id="btnVaiCasa">' + (casa ? 'Modifica indirizzo di casa' : 'Imposta la casa') + '</button>'
+    + '<button class="btn ghost" id="btnEsci">Esci dal profilo</button>';
+  const vc = $('#btnVaiCasa'); if(vc) vc.onclick = () => { if(casa){ mostraScheda('casa'); iniziaImpostaCasa(); } else mostraScheda('casa'); };
+  const be = $('#btnEsci'); if(be) be.onclick = () => {
+    if(confirm('Vuoi uscire dal profilo? Le statistiche restano salvate.')){ profilo = null; try{ localStorage.removeItem('parkProfilo'); }catch(e){} renderAccount(); }
+  };
  } catch(err){
-  // niente più pagina bianca: mostro l'errore e un modo per ripulire la memoria
   $('#accountPage').innerHTML =
-    '<h1>Area personale</h1>'
-    + '<p class="sub">Si è verificato un problema nel mostrare questa pagina.</p>'
+    '<h1>Area personale</h1><p class="sub">Si è verificato un problema nel mostrare questa pagina.</p>'
     + '<div class="card2"><div class="irow"><span class="iico" style="background:var(--red)">!</span>'
     + '<span class="g"><span class="k">' + esc(err.message || 'Errore') + '</span>'
-    + '<span class="s">Prova a ripulire i dati salvati su questo telefono e riavvia.</span></span></div></div>'
+    + '<span class="s">Prova a ripulire i dati salvati e riavvia.</span></span></div></div>'
     + '<button class="btn" id="btnReset">Ripulisci i dati e ricarica</button>';
   const r = $('#btnReset'); if(r) r.onclick = () => {
-    try{ localStorage.removeItem('parkCasa'); localStorage.removeItem('parkVita'); }catch(e){}
+    try{ localStorage.removeItem('parkProfilo'); localStorage.removeItem('parkVita'); }catch(e){}
     location.reload();
   };
  }
