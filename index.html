@@ -920,29 +920,40 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
     </div>
   </div>
 
-  <div id="pannello" class="sheet hidden">
+  <div id="pannello" class="sheet">
     <div class="sheetBody" id="sheetBody">
       <section id="tabStato">
-        <div class="card2">
-          <div class="row"><span class="g"><span class="k">GPS</span><span class="s" id="acc">—</span></span>
-            <span class="pill" id="pillGps">—</span></div>
-          <div class="row"><span class="g"><span class="k">Notifiche</span><span class="s">Avviso quando parcheggi</span></span>
-            <span class="pill" id="pillNotif">—</span></div>
-          <div class="row"><span class="g"><span class="k">Movimento</span><span class="s" id="motSub">Distingue i tuoi passi dalla coda in auto</span></span>
-            <span class="pill" id="pillMot">—</span></div>
+        <div id="statoSpento" class="hidden">
+          <div class="card2"><div class="irow"><span class="iico" style="background:var(--ink-3)">⏸</span>
+            <span class="g"><span class="k">Rilevamento non attivo</span>
+            <span class="s">Avvialo quando parti in auto: ti dirò dove hai parcheggiato appena scendi.</span></span></div></div>
+          <button class="btn" id="btnStartStato">Inizia a seguire</button>
         </div>
-        <button class="btn stop" id="btnStop">Interrompi</button>
-        <p class="note">Funziona solo mentre questa schermata è aperta e il telefono acceso: iOS mette in pausa il GPS se blocchi lo schermo o cambi app.</p>
+        <div id="statoAcceso">
+          <div class="card2">
+            <div class="row"><span class="g"><span class="k">GPS</span><span class="s" id="acc">—</span></span>
+              <span class="pill" id="pillGps">—</span></div>
+            <div class="row"><span class="g"><span class="k">Notifiche</span><span class="s">Avviso quando parcheggi</span></span>
+              <span class="pill" id="pillNotif">—</span></div>
+            <div class="row"><span class="g"><span class="k">Movimento</span><span class="s" id="motSub">Distingue i tuoi passi dalla coda in auto</span></span>
+              <span class="pill" id="pillMot">—</span></div>
+          </div>
+          <button class="btn stop" id="btnStop">Interrompi</button>
+          <p class="note">Funziona solo mentre questa schermata è aperta e il telefono acceso: iOS mette in pausa il GPS se blocchi lo schermo o cambi app.</p>
+        </div>
       </section>
 
       <section id="tabViaggio" class="hidden">
-        <div class="stats">
-          <div class="stat"><b id="stKm">0,0</b><span>km percorsi</span></div>
-          <div class="stat"><b id="stDur">0 min</b><span>durata</span></div>
-          <div class="stat"><b id="stAvg">0</b><span>km/h media</span></div>
-          <div class="stat"><b id="stMax">0</b><span>km/h massima</span></div>
+        <div id="viaggioInCorso" class="hidden">
+          <div class="h2">Viaggio in corso</div>
+          <div class="stats">
+            <div class="stat"><b id="stKm">0,0</b><span>km percorsi</span></div>
+            <div class="stat"><b id="stDur">0 min</b><span>durata</span></div>
+            <div class="stat"><b id="stAvg">0</b><span>km/h media</span></div>
+            <div class="stat"><b id="stMax">0</b><span>km/h massima</span></div>
+          </div>
         </div>
-        <div class="h2">Dove hai parcheggiato</div>
+        <div class="h2">La tua auto e i parcheggi recenti</div>
         <div class="card2 log" id="log"></div>
       </section>
     </div>
@@ -3209,8 +3220,20 @@ if('geolocation' in navigator){
 
 /* ============================ SCHEDE ============================ */
 let schedaAttiva = 'stato';
+let attivo = false;    // true quando il rilevamento è in corso
+function aggiornaBlocchi(){
+  // Stato: mostro il blocco "spento" o quello "acceso"
+  const sp = $('#statoSpento'), ac = $('#statoAcceso');
+  if(sp && ac){ sp.classList.toggle('hidden', attivo); ac.classList.toggle('hidden', !attivo); }
+  // Viaggio: le statistiche del viaggio in corso solo se sto rilevando
+  const vic = $('#viaggioInCorso');
+  if(vic) vic.classList.toggle('hidden', !attivo);
+  // il pulsante "Inizia" nel blocco spento
+  const bs = $('#btnStartStato'); if(bs) bs.onclick = () => avvia();
+}
 function mostraScheda(nome){
   schedaAttiva = nome;
+  aggiornaBlocchi();
   const sheet = $('#pannello'), acc = $('#accountPage'), casaP = $('#casaPage');
   acc.classList.add('hidden'); casaP.classList.add('hidden');
   if(nome === 'account'){
@@ -3773,8 +3796,8 @@ function onErr(e){
 function avvia(){
   samples = []; vHist = []; stato = 'fermo'; confermato = 'fermo'; dalQuando = Date.now(); puntoFermo = null;
   resetViaggio();
+  attivo = true;
   $('#startWrap').classList.add('hidden');
-  $('#pannello').classList.remove('hidden');
   mostraScheda('stato');
   setDot(true);
   aggiornaUI(null);
@@ -3796,6 +3819,7 @@ function avvia(){
 }
 function ferma(){
   primoFixArrivato = false; fixImprecisiDiFila = 0;
+  attivo = false;
   salvaVita();
   if(watchId != null) navigator.geolocation.clearWatch(watchId);
   watchId = null;
@@ -3804,7 +3828,6 @@ function ferma(){
   headingCorrente = 0; ruotaMappa = true; forzaRotazione();
   setDot(false);
   $('#accountPage').classList.add('hidden');
-  $('#pannello').classList.add('hidden');
   mostraScheda('mappa');
   $('#startWrap').classList.remove('hidden');
   $('#stato').textContent = 'Non sto ancora seguendo';
