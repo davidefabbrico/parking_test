@@ -722,13 +722,20 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .me-dot{position:absolute;inset:0;width:15px;height:15px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .me-beam{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;opacity:0;transition:opacity .3s,transform .3s}
 .me-beam.on{opacity:1}
-.park-pin{width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
-  font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18);border:2.5px solid var(--blue)}
+.park-pin{width:26px;height:26px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:13px;box-shadow:0 1px 2px rgba(0,0,0,.14),0 3px 8px rgba(0,0,0,.12);border:2px solid var(--ink-3);opacity:.85}
+/* dove ho lasciato l'auto ORA: pin grande blu a goccia */
+.auto-pin{position:relative;width:38px;height:46px}
+.auto-bubble{position:absolute;top:0;left:0;width:38px;height:38px;border-radius:50%;background:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid #fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.25),0 8px 18px rgba(0,113,227,.35)}
+.auto-stem{position:absolute;bottom:2px;left:50%;width:4px;height:12px;margin-left:-2px;background:var(--blue);
+  border-radius:0 0 2px 2px;box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .home-pin{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
   font-size:17px;box-shadow:0 1px 3px rgba(0,0,0,.16),0 6px 16px rgba(0,0,0,.18);border:2.5px solid var(--green)}
-/* parcheggi pubblici trovati nei dintorni */
-.pk-pin{width:26px;height:26px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:15px;box-shadow:0 1px 3px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.15);border:2px solid #fff}
+/* parcheggi pubblici trovati nei dintorni: quadrato verde-acqua con P */
+.pk-pin{width:24px;height:24px;border-radius:7px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;box-shadow:0 1px 3px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.15);border:2px solid #fff}
 .pkBadge{left:12px;bottom:calc(64px + env(safe-area-inset-bottom));padding:9px 13px;display:flex;align-items:center;gap:8px;
   font-size:13px;font-weight:600;cursor:pointer}
 .pkBadge .p{width:22px;height:22px;border-radius:6px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
@@ -768,9 +775,13 @@ body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,Bli
 .pill.ok{background:rgba(52,199,89,.15);color:#248A3D}
 .pill.no{background:rgba(255,59,48,.12);color:#D70015}
 
-.log .row{cursor:pointer}
+.log .row{cursor:pointer;position:relative}
 .log .row:active{background:#FAF9F6}
 .log a{color:var(--blue);font-size:12.5px;font-weight:500;text-decoration:none}
+.log .del{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;
+  background:#EDEDF0;border-radius:50%;color:var(--ink-2);font-size:13px;cursor:pointer;display:grid;place-items:center}
+.log .del:active{background:#E0E0E5}
+.log .row .g{padding-right:30px}
 
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .stat{background:var(--surface);border-radius:16px;padding:14px 15px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -2936,7 +2947,11 @@ const meIcon = L.divIcon({className:'', iconSize:[15,15], iconAnchor:[7,7],
      + '<stop offset="0%" stop-color="#0071E3" stop-opacity=".55"/><stop offset="100%" stop-color="#0071E3" stop-opacity="0"/>'
      + '</radialGradient></defs><path d="M23 23 L9 1 A26 26 0 0 1 37 1 Z" fill="url(#bg)"/></svg>'
      + '<div class="me-dot"></div></div>'});
-const parkIcon = L.divIcon({className:'', iconSize:[32,32], iconAnchor:[16,16],
+// dove ho lasciato l'auto ADESSO: pin grande blu con la macchina
+const autoIcon = L.divIcon({className:'', iconSize:[38,46], iconAnchor:[19,44],
+  html:'<div class="auto-pin"><div class="auto-bubble">🚗</div><div class="auto-stem"></div></div>'});
+// parcheggi PASSATI (storico): segno più piccolo e tenue
+const parkIcon = L.divIcon({className:'', iconSize:[26,26], iconAnchor:[13,13],
   html:'<div class="park-pin">🅿️</div>'});
 
 // apre la posizione nell'app mappe giusta per il dispositivo:
@@ -3017,15 +3032,25 @@ function aggiornaBeam(heading, muovendosi){
   }
 }
 
-function piazzaPin(pos, quando, avviso){
-  const ll = [pos.lat, pos.lon];
-  const m = L.marker(ll, {icon:parkIcon, zIndexOffset:900}).addTo(map);
-  const extra = avviso ? '<span style="display:block;color:#D70015;font-size:11.5px;margin:3px 0 4px">⚠️ ' + esc(avviso) + '</span>' : '';
-  m.bindPopup('<div class="pop"><b>Parcheggiata alle ' + fmtOra(quando) + '</b>' + extra + '<a href="' + mapUrl(pos.lat, pos.lon) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
-  pins.push(m);
-  if(linea) map.removeLayer(linea);
-  linea = L.polyline([meMarker ? meMarker.getLatLng() : ll, ll], {color:'rgba(0,113,227,.5)', weight:2.5, dashArray:'2,7'}).addTo(map);
-  return m;
+// ridisegna TUTTI i parcheggi salvati: l'ultimo è "dove sono ora" (icona auto
+// grande), i precedenti sono storico (icona piccola tenue). Persistono anche
+// dopo "Interrompi", perché ricreati dal log salvato.
+function ridisegnaParcheggi(){
+  pins.forEach(m => map.removeLayer(m)); pins = [];
+  log.forEach((e, i) => {
+    const attuale = (i === 0);                          // il più recente = auto attuale
+    const m = L.marker([e.pos.lat, e.pos.lon], {icon: attuale ? autoIcon : parkIcon, zIndexOffset: attuale ? 950 : 850}).addTo(map);
+    const extra = e.avviso ? '<span style="display:block;color:#D70015;font-size:11.5px;margin:3px 0 4px">⚠️ ' + esc(e.avviso) + '</span>' : '';
+    const titolo = attuale ? 'La tua auto' : 'Parcheggio precedente';
+    m.bindPopup('<div class="pop"><b>' + titolo + '</b><span style="display:block;font-size:12px;color:#86868B;margin:1px 0 3px">Alle ' + fmtOra(e.t) + '</span>' + extra + '<a href="' + mapUrl(e.pos.lat, e.pos.lon) + '" target="_blank" rel="noopener">Apri in Mappe &rarr;</a></div>');
+    e.marker = m;
+    pins.push(m);
+  });
+  // linea tratteggiata dalla mia posizione all'auto attuale
+  if(linea){ map.removeLayer(linea); linea = null; }
+  if(log.length && meMarker){
+    linea = L.polyline([meMarker.getLatLng(), [log[0].pos.lat, log[0].pos.lon]], {color:'rgba(0,113,227,.5)', weight:2.5, dashArray:'2,7'}).addTo(map);
+  }
 }
 function rimuoviLinea(){ if(linea){ map.removeLayer(linea); linea = null; } }
 
@@ -3145,10 +3170,17 @@ function parcheggiInventati(centro){
 function cercaParcheggi(lat, lon){
   const centro = [lat, lon];
   pkUltimoCentro = centro;
-  const q = '[out:json][timeout:10];(node[amenity=parking](around:1000,' + lat + ',' + lon + ');'
-          + 'way[amenity=parking](around:1000,' + lat + ',' + lon + '););out center 40;';
+  // solo veri parcheggi accessibili: escludo le corsie di sosta lungo strada
+  // (parking=lane/street_side) e le aree private/riservate, che sono quelle
+  // che finivano nei giardini o in mezzo alle rotonde.
+  const filtro = '[amenity=parking][access!=private][access!=no]'
+               + '[parking!=lane][parking!=street_side][parking!=on_kerb]';
+  const q = '[out:json][timeout:12];('
+          + 'node' + filtro + '(around:1000,' + lat + ',' + lon + ');'
+          + 'way' + filtro + '(around:1000,' + lat + ',' + lon + ');'
+          + ');out center 50;';
   const ctrl = new AbortController();
-  const tOut = setTimeout(() => ctrl.abort(), 9000);
+  const tOut = setTimeout(() => ctrl.abort(), 11000);
   fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:q, signal:ctrl.signal})
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(d => {
@@ -3156,8 +3188,11 @@ function cercaParcheggi(lat, lon){
       const lista = (d.elements||[]).map(e => {
         const la = e.lat != null ? e.lat : (e.center && e.center.lat);
         const lo = e.lon != null ? e.lon : (e.center && e.center.lon);
-        if(la == null) return null;
-        return {lat: la, lon: lo, nome: (e.tags && (e.tags.name || (e.tags.parking ? 'Parcheggio ' + e.tags.parking : 'Parcheggio'))) || 'Parcheggio'};
+        if(la == null || lo == null) return null;
+        const tg = e.tags || {};
+        const tipo = tg.parking === 'multi-storey' ? 'Parcheggio coperto'
+                   : tg.parking === 'underground' ? 'Parcheggio sotterraneo' : 'Parcheggio';
+        return {lat: la, lon: lo, nome: tg.name || tipo, aPagamento: tg.fee === 'yes'};
       }).filter(Boolean);
       if(lista.length) mostraParcheggi(lista, centro);
       else mostraParcheggi(parcheggiInventati(centro), centro);
@@ -3282,7 +3317,11 @@ let stato = 'fermo';
 let dalQuando = Date.now();
 let confermato = 'fermo';
 let puntoFermo = null;
-let log = [];
+let log = leggi('parkLog', []);
+if(!Array.isArray(log)) log = [];
+// pulisco voci malformate salvate in precedenza
+log = log.filter(e => e && e.pos && isFinite(e.pos.lat) && isFinite(e.pos.lon));
+function salvaLog(){ scrivi('parkLog', log.map(e => ({t:e.t, pos:e.pos, url:e.url, avviso:e.avviso}))); }
 
 let viaggio = null;
 function resetViaggio(){ viaggio = {inizio: Date.now(), distanza: 0, vMax: 0, ultimoPunto: null, secondiInMoto: 0}; }
@@ -3429,8 +3468,11 @@ function salvaParcheggio(pos){
   let avviso = null;
   if(ore < 1) avviso = 'Qui la pulizia strade è in corso o imminente: rischi la rimozione. Meglio spostarsi.';
   else if(ore < 10) avviso = 'Attenzione: pulizia strade fra ' + Math.round(ore) + ' ore (' + GIORNI[dc.pulizia.giorno] + ' ' + hhmm(dc.pulizia.fascia[0]) + '), lato civici ' + dc.pulizia.lato + '.';
-  const marker = piazzaPin(pos, quando, avviso);
-  log.unshift({t: quando, pos, url, marker, avviso});
+  const marker = null;
+  log.unshift({t: quando, pos: {lat: pos.lat, lon: pos.lon}, url, avviso});
+  if(log.length > 30) log = log.slice(0, 30);           // tengo gli ultimi 30
+  salvaLog();
+  ridisegnaParcheggi();
   renderLog();
   vita.parcheggi++; salvaVita();
   ultimoUrlParcheggio = url;
@@ -3453,14 +3495,19 @@ function renderLog(){
   const el = $('#log');
   if(!log.length){ el.innerHTML = '<div class="row"><span class="g"><span class="s">Ancora nessun parcheggio. Comparirà qui appena scendi dall\'auto.</span></span></div>'; return; }
   el.innerHTML = log.slice(0,12).map((e,i) =>
-    '<div class="row" data-i="' + i + '"><span class="g"><span class="k">Parcheggiata alle ' + fmtOra(e.t) + '</span>'
-    + '<span class="s"><a href="' + e.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apri in Mappe &rarr;</a></span></span></div>').join('');
+    '<div class="row" data-i="' + i + '"><span class="g"><span class="k">' + (i===0 ? '🚗 La tua auto' : 'Parcheggio precedente') + '</span>'
+    + '<span class="s">Alle ' + fmtOra(e.t) + ' · ' + new Date(e.t).toLocaleDateString('it-IT') + ' · <a href="' + e.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">Apri in Mappe &rarr;</a></span></span>'
+    + '<button class="del" data-del="' + i + '" aria-label="Elimina" onclick="event.stopPropagation()">✕</button></div>').join('');
   el.querySelectorAll('[data-i]').forEach(row => row.onclick = () => {
     const e = log[+row.dataset.i];
     seguendo = false; updateLocateBtn();
     mostraScheda('mappa');
     map.setView([e.pos.lat, e.pos.lon], 18, {animate:true});
-    e.marker.openPopup();
+    if(e.marker) e.marker.openPopup();
+  });
+  el.querySelectorAll('[data-del]').forEach(btn => btn.onclick = (ev) => {
+    ev.stopPropagation();
+    log.splice(+btn.dataset.del, 1); salvaLog(); ridisegnaParcheggi(); renderLog();
   });
 }
 
@@ -3772,6 +3819,10 @@ $('#btnStart').onclick = () => {
 };
 $('#btnStop').onclick = ferma;
 renderLog();
+ridisegnaParcheggi();      // mostra subito l'auto salvata da una sessione precedente
+if(log.length){            // se ho un'auto salvata, centro la mappa lì all'avvio
+  try{ map.setView([log[0].pos.lat, log[0].pos.lon], 16); }catch(e){}
+}
 updateCompassBtn();
 // la barra è visibile fin da subito, così puoi aprire Account e impostare casa
 // anche prima di avviare il rilevamento. Si parte in modalità Mappa (pulita).
