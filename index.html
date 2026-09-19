@@ -3428,6 +3428,8 @@ const ACCURATEZZA_MAX  = 30;
 const FINESTRA         = 5;
 
 let watchId = null, samples = [], vHist = [];
+let vRecente = 0;              // ultima velocità stimata (km/h)
+let tUltimaVeloce = 0;        // quando sei stato l'ultima volta chiaramente in auto (>10 km/h)
 let stato = 'fermo';
 let dalQuando = Date.now();
 let confermato = 'fermo';
@@ -3464,16 +3466,22 @@ function suPasso(m, t){
     sopraSoglia = false;                        // tornati sotto: pronti al prossimo passo
   }
   passi = passi.filter(pp => t-pp < 4000);
-  // Reattività: appena riconosco la camminata, se ero in auto, salvo il parcheggio.
-  // Non pretendo più che lo stato GPS sia già "fermo": il GPS da fermo spesso non
-  // aggiorna, quindi lo stato resterebbe "in_auto" per sempre. Camminare È la prova
-  // che sei sceso. Uso puntoFermo se c'è, altrimenti l'ultima posizione nota.
+  // Riconoscere il parcheggio: eri in auto e ora cammini. Ma servono tre
+  // garanzie insieme, per non salvare mentre guidi col telefono che sballotta:
   if(!primaCamminava && staCamminando() && confermato === 'in_auto'){
-    // ma solo se sono rallentato/fermo da qualche secondo: evita che due passi
-    // (telefono che sballotta) scattino mentre sei ancora in coda in movimento.
-    const fermoDaAbbastanza = (stato === 'fermo') || (Date.now() - dalQuando > 4000);
+    const ora = Date.now();
+    // se il GPS non aggiorna da un po', la "velocità recente" non è affidabile:
+    // la considero sconosciuta (il caso classico dell'auto ferma col GPS bloccato)
+    const gpsRecente = (ora - (ultimaPosizione ? ultimaPosizione.t : 0)) < 5000;
+    // 1) NON stai andando veloce ADESSO (solo se il GPS è fresco): sopra 10 km/h sei in auto
+    const nonVeloce = !gpsRecente || vRecente < 10;
+    // 2) è passato abbastanza da quando eri chiaramente in auto (>10 km/h):
+    //    almeno 8 secondi, il tempo minimo per fermarsi e scendere davvero
+    const scesoDaAuto = (ora - tUltimaVeloce) > 8000;
+    // 3) sei rallentato/fermo da qualche secondo, non appena decelerato
+    const fermoDaAbbastanza = (stato === 'fermo') || (ora - dalQuando > 4000);
     const dove = puntoFermo || ultimaPosizione;
-    if(fermoDaAbbastanza && dove){ salvaParcheggio(dove); }
+    if(nonVeloce && scesoDaAuto && fermoDaAbbastanza && dove){ salvaParcheggio(dove); }
   }
 }
 function onMotion(e){
@@ -3792,7 +3800,7 @@ function onFix(p){
   $('#pillGps').textContent = acc <= ACCURATEZZA_MAX ? 'buono' : 'debole';
   $('#pillGps').className = 'pill ' + (acc <= ACCURATEZZA_MAX ? 'ok' : 'no');
 
-  const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: p.timestamp || Date.now(), acc: acc};
+  const punto = {lat: p.coords.latitude, lon: p.coords.longitude, t: Date.now(), acc: acc};
   ultimaPosizione = punto;                    // memorizzo l'ultimo fix valido (per "casa qui")
   // cerco i parcheggi vicini al primo fix e quando mi sono spostato parecchio
   if(!pkUltimoCentro || distMetri([punto.lat, punto.lon], pkUltimoCentro) > 500){
@@ -3824,6 +3832,8 @@ function onFix(p){
       vHist.push(v); if(vHist.length > FINESTRA) vHist.shift();
       const ord = vHist.slice().sort((x,y)=>x-y);
       const vMedia = ord[Math.floor(ord.length/2)];
+      vRecente = vMedia;                         // velocità corrente, letta da suPasso
+      if(vMedia > 10) tUltimaVeloce = Date.now();   // memorizzo quando ero chiaramente in auto
 
       // direzione di marcia dal GPS (non dalla bussola), solo se ci muoviamo
       if(p.coords.heading != null && p.coords.heading >= 0 && vMedia > 5){
